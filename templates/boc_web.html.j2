@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ conf.title }} – {{ conf.subtitle }}</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --muted: #5c5c5c;
+    --rule: #d8d4cc;
+    --accent: #6b4f2a;       /* understated earth tone */
+    --bg: #ffffff;
+    --measure: 42rem;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.55 Georgia, "Times New Roman", serif;
+  }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  h1 { font-size: 1.7rem; line-height: 1.2; margin: 0 0 .3rem; }
+  .subtitle { font-size: 1.05rem; color: var(--muted); margin: 0; }
+  .meta { font-size: .85rem; color: var(--muted); margin-top: .6rem; }
+  .meta a { color: var(--accent); }
+
+  nav.toc { margin: 1.5rem 0 2.5rem; font-family: -apple-system, system-ui, sans-serif; font-size: .9rem; }
+  nav.toc strong { display: block; text-transform: uppercase; letter-spacing: .05em; font-size: .75rem; color: var(--muted); margin-bottom: .4rem; }
+  nav.toc ol { margin: 0; padding-left: 1.2rem; }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); }
+
+  section.session { margin-bottom: 2.5rem; }
+  section.session > h2 {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 1.15rem; border-bottom: 1px solid var(--rule);
+    padding-bottom: .3rem; margin: 0 0 1.2rem;
+  }
+  article.entry { margin: 0 0 1.6rem; padding-left: .9rem; border-left: 3px solid var(--rule); }
+  article.entry h3 { font-size: 1.05rem; margin: 0 0 .2rem; }
+  .authors { color: var(--muted); font-style: italic; margin: 0 0 .5rem; }
+  .abstract { margin: 0 0 .4rem; }
+  .keywords { font-family: -apple-system, system-ui, sans-serif; font-size: .8rem; color: var(--muted); }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule); font-size: .8rem; color: var(--muted); }
+  @media (max-width: 480px) { .wrap { padding-top: 1.5rem; } h1 { font-size: 1.4rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>{{ conf.title }}</h1>
+    <p class="subtitle">{{ conf.subtitle }}</p>
+    <p class="meta">
+      {{ conf.dates }} · {{ conf.location }} ·
+      {{ total }} Beiträge ·
+      <a href="book_of_contents.pdf">PDF herunterladen</a>
+    </p>
+  </header>
+
+  <nav class="toc">
+    <strong>Inhalt</strong>
+    <ol>
+      {% for block in sessions %}
+      <li><a href="#s{{ loop.index }}">{{ block.track }}</a> ({{ block.entries|length }})</li>
+      {% endfor %}
+    </ol>
+  </nav>
+
+  {% for block in sessions %}
+  <section class="session" id="s{{ loop.index }}">
+    <h2>{{ block.track }}</h2>
+    {% for e in block.entries %}
+    <article class="entry">
+      <h3>{{ e.title }}</h3>
+      {% if e.authors %}<p class="authors">{{ e.authors }}</p>{% endif %}
+      {% if e.abstract %}<p class="abstract">{{ e.abstract }}</p>{% endif %}
+      {% if e.keywords %}<p class="keywords">Schlagwörter: {{ e.keywords }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <footer>
+    Automatisch generiert am {{ generated }}.
+  </footer>
+</div>
+</body>
+</html>

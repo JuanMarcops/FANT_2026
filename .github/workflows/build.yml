@@ -1,0 +1,53 @@
+name: Build Book of Contents
+
+on:
+  push:
+    branches: [main]
+    paths:                    # only rebuild when relevant files change
+      - "data/**"
+      - "templates/**"
+      - "scripts/**"
+      - "config.yml"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:          # manual "Run workflow" button
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # WeasyPrint needs Pango/Cairo system libraries for the PDF.
+      - name: Install system libraries for WeasyPrint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi-dev
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build site + PDF
+        run: python scripts/build.py --out site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

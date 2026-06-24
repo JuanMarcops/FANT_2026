@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<style>
+  /* Print layout: A4, page numbers, running header. */
+  @page {
+    size: A4;
+    margin: 22mm 20mm 20mm;
+    @bottom-center { content: counter(page); font: 9pt Georgia, serif; color: #666; }
+    @top-right { content: "{{ conf.title }}"; font: 8pt Georgia, serif; color: #999; }
+  }
+  @page :first { @top-right { content: ""; } @bottom-center { content: ""; } }
+
+  body { font: 11pt/1.5 Georgia, "Times New Roman", serif; color: #1a1a1a; }
+
+  /* Title page */
+  .titlepage { text-align: center; page-break-after: always; padding-top: 28%; }
+  .titlepage h1 { font-size: 24pt; margin: 0 0 .4rem; }
+  .titlepage .subtitle { font-size: 14pt; color: #555; margin: 0 0 1.5rem; }
+  .titlepage .meta { font-size: 11pt; color: #555; }
+
+  /* Table of contents */
+  .toc { page-break-after: always; }
+  .toc h2 { font-size: 14pt; border-bottom: 1px solid #000; padding-bottom: .2rem; }
+  .toc ol { padding-left: 1.4rem; }
+  .toc li { margin-bottom: .25rem; }
+
+  section.session { page-break-inside: auto; }
+  section.session > h2 {
+    font-size: 13pt; border-bottom: 1px solid #000;
+    padding-bottom: .2rem; margin-top: 1.4rem;
+    page-break-after: avoid;
+  }
+  article.entry { margin-bottom: 1rem; page-break-inside: avoid; }
+  article.entry h3 { font-size: 11.5pt; margin: 0 0 .15rem; page-break-after: avoid; }
+  .authors { font-style: italic; color: #444; margin: 0 0 .35rem; }
+  .abstract { margin: 0 0 .3rem; text-align: justify; }
+  .keywords { font-size: 9pt; color: #555; }
+</style>
+</head>
+<body>
+  <div class="titlepage">
+    <h1>{{ conf.title }}</h1>
+    <p class="subtitle">{{ conf.subtitle }}</p>
+    <p class="meta">{{ conf.dates }}<br>{{ conf.location }}<br><br>{{ total }} Beiträge</p>
+  </div>
+
+  <div class="toc">
+    <h2>Inhalt</h2>
+    <ol>
+      {% for block in sessions %}<li>{{ block.track }} ({{ block.entries|length }})</li>{% endfor %}
+    </ol>
+  </div>
+
+  {% for block in sessions %}
+  <section class="session">
+    <h2>{{ block.track }}</h2>
+    {% for e in block.entries %}
+    <article class="entry">
+      <h3>{{ e.title }}</h3>
+      {% if e.authors %}<p class="authors">{{ e.authors }}</p>{% endif %}
+      {% if e.abstract %}<p class="abstract">{{ e.abstract }}</p>{% endif %}
+      {% if e.keywords %}<p class="keywords">Schlagwörter: {{ e.keywords }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</body>
+</html>

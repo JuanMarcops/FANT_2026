@@ -1,0 +1,33 @@
+# Central configuration. Everything conference-specific lives here,
+# so the Python code stays generic and reusable.
+
+conference:
+  title: "Beispiel-Konferenz 2026"
+  subtitle: "Book of Contents / Abstractband"
+  dates: "12.–14. November 2026"
+  location: "Goethe-Universität Frankfurt am Main"
+  # Public base URL of the GitHub Pages site (shown in the footer).
+  site_url: "https://USERNAME.github.io/boc/"
+
+# CSV exported from the Google Form / Sheet and committed into the repo.
+input:
+  # Path to the committed CSV, relative to the repo root.
+  csv_path: "data/responses.csv"
+
+  # Map the canonical fields the code uses (left) to the CSV column
+  # HEADERS (right) exactly as Google writes them in row 1.
+  # Fields you do not collect can be left as empty strings "".
+  columns:
+    authors: "Autor:innen"
+    title: "Titel des Beitrags"
+    abstract: "Abstract"
+    track: "Session / Track"          # used to group the BoC; optional
+    keywords: "Schlagwörter"          # optional
+
+# Order of sessions in the BoC. Tracks not listed here are appended
+# alphabetically. Leave empty to sort all tracks alphabetically.
+session_order:
+  - "Keynote"
+  - "Session 1"
+  - "Session 2"
+  - "Poster"
