@@ -12,17 +12,42 @@ conference:
 # CSV exported from the Google Form / Sheet and committed into the repo.
 input:
   # Path to the committed CSV, relative to the repo root.
-  csv_path: "data/responses.csv"
+  csv_path: "data/FANT26_merged.csv"
 
   # Map the canonical fields the code uses (left) to the CSV column
-  # HEADERS (right) exactly as Google writes them in row 1.
-  # Fields you do not collect can be left as empty strings "".
+  # HEADERS (right) exactly as the merged CSV writes them in row 1.
+  # Values may be single strings or lists of candidate header names.
   columns:
-    authors: "Autor:innen"
-    title: "Titel des Beitrags"
-    abstract: "Abstract"
-    track: "Session / Track"          # used to group the BoC; optional
-    keywords: "Schlagwörter"          # optional
+    authors:
+      - "Author / Presenter"
+      - "Author:in/ Vortragende:r"
+    co_authors:
+      - "Co-authors"
+      - "Co-author"
+    title:
+      - "Title of the contribution"
+      - "Titel des Beitrags"
+    abstract:
+      - "Abstract (approx. 2–3 sentences)"
+      - "Abstract (approx. 2-3 sentences)"
+      - "Abstract (approx. 150 words)"
+      - "Abstract"
+    track: ""
+    keywords:
+      - "Keywords (3-5)"
+      - "Schlagwörter"
+    format:
+      - "Format of the contribution"
+      - "Format des Beitrags"
+    language:
+      - "Language of the contribution:"
+      - "Sprache des Beitrags:"
+    first_name:
+      - "First name"
+      - "Vorname"
+    last_name:
+      - "Last name"
+      - "Nachname"
 
 # Order of sessions in the BoC. Tracks not listed here are appended
 # alphabetically. Leave empty to sort all tracks alphabetically.

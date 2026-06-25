@@ -18,12 +18,12 @@ All conference-specific settings live in config.yml, not here.
 import argparse
 import csv
 import sys
+import unicodedata
 from datetime import date
 from pathlib import Path
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from weasyprint import HTML
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES = ROOT / "templates"
@@ -34,27 +34,161 @@ def load_config() -> dict:
         return yaml.safe_load(fh)
 
 
+def normalize_header(label: str) -> str:
+    if label is None:
+        return ""
+    normalized = unicodedata.normalize("NFKC", label.strip().lower())
+    normalized = (
+        normalized.replace("ä", "a")
+        .replace("ö", "o")
+        .replace("ü", "u")
+        .replace("ß", "ss")
+        .replace("–", "-")
+        .replace("—", "-")
+        .replace("’", "'")
+        .replace("‘", "'")
+    )
+    return " ".join(normalized.split())
+
+
+def normalize_column_spec(value):
+    if isinstance(value, list):
+        return [str(v) for v in value if v is not None]
+    if value:
+        return [str(value)]
+    return []
+
+
+def build_header_index(header_row: list[str]) -> dict[str, list[int]]:
+    index = {}
+    for idx, name in enumerate(header_row):
+        key = normalize_header(name)
+        index.setdefault(key, []).append(idx)
+    return index
+
+
+def find_header_indices(header_index: dict[str, list[int]], candidates: list[str]) -> list[int]:
+    indices: list[int] = []
+    for candidate in candidates:
+        normalized = normalize_header(candidate)
+        indices.extend(header_index.get(normalized, []))
+    return indices
+
+
+def get_cell(row: list[str], indices: list[int]) -> str:
+    for idx in indices:
+        if idx < len(row):
+            value = row[idx].strip()
+            if value:
+                return value
+    return ""
+
+
+def get_multi_cell(row: list[str], indices: list[int]) -> list[str]:
+    """Return all non-empty values from the given column indices (preserves order)."""
+    return [row[idx].strip() for idx in indices if idx < len(row) and row[idx].strip()]
+
+
+_NONE_VALUES = frozenset({"none", "n/a", "no", "-", "–", "keine", "no co-author", "no co-authors"})
+
+
+def clean_none_values(values: list[str]) -> list[str]:
+    return [v for v in values if normalize_header(v) not in _NONE_VALUES]
+
+
+def is_poster_format(value: str) -> bool:
+    value = normalize_header(value)
+    return value in {"poster", "posterbeitrag", "poster contribution", "poster session"}
+
+
 def read_csv(path: Path, colmap: dict) -> list[dict]:
     """Read the exported CSV into canonical submission dicts.
 
-    `utf-8-sig` strips the BOM that Google sometimes prepends.
-    Empty mappings ("") simply yield empty fields.
+    This code preserves duplicate column headers and chooses the first
+    non-empty value among duplicate header groups.
     """
+    defaults = {
+        "authors": ["Author / Presenter", "Author:in/ Vortragende:r"],
+        "co_authors": ["Co-authors", "Co-author", "Mitautor:innen"],
+        "title": ["Title of the contribution", "Titel des Beitrags"],
+        "abstract": [
+            "Abstract (approx. 2–3 sentences)",
+            "Abstract (approx. 2-3 sentences)",
+            "Abstract (approx. 150 words)",
+            "Abstract",
+        ],
+        "track": [],
+        "keywords": ["Keywords (3-5)", "Schlagwörter"],
+        "format": ["Format of the contribution", "Format des Beitrags"],
+        "language": ["Language of the contribution:", "Sprache des Beitrags:"],
+        "first_name": ["First name", "Vorname"],
+        "last_name": ["Last name", "Nachname"],
+    }
+
+    column_candidates = {
+        key: normalize_column_spec(colmap.get(key, defaults.get(key, []))) or defaults.get(key, [])
+        for key in defaults
+    }
+
     submissions = []
     with open(path, encoding="utf-8-sig", newline="") as fh:
-        reader = csv.DictReader(fh)
-        for rec in reader:
-            title = rec.get(colmap.get("title", ""), "").strip()
+        reader = csv.reader(fh)
+        header = next(reader, [])
+        header_index = build_header_index(header)
+
+        title_indices = find_header_indices(header_index, column_candidates["title"])
+        authors_indices = find_header_indices(header_index, column_candidates["authors"])
+        coauthor_indices = find_header_indices(header_index, column_candidates["co_authors"])
+        # Google Forms exports overflow co-author inputs as empty-header columns adjacent to a Co-authors column.
+        empty_indices = header_index.get("", [])
+        for cidx in list(coauthor_indices):
+            for eidx in empty_indices:
+                if eidx == cidx + 1 and eidx not in coauthor_indices:
+                    coauthor_indices.append(eidx)
+        abstract_indices = find_header_indices(header_index, column_candidates["abstract"])
+        track_indices = find_header_indices(header_index, column_candidates["track"])
+        keywords_indices = find_header_indices(header_index, column_candidates["keywords"])
+        format_indices = find_header_indices(header_index, column_candidates["format"])
+        language_indices = find_header_indices(header_index, column_candidates["language"])
+        first_name_indices = find_header_indices(header_index, column_candidates["first_name"])
+        last_name_indices = find_header_indices(header_index, column_candidates["last_name"])
+
+        for row in reader:
+            if not any(cell.strip() for cell in row):
+                continue
+
+            format_value = get_cell(row, format_indices)
+            if is_poster_format(format_value):
+                continue
+
+            title = get_cell(row, title_indices)
             if not title:
-                continue  # skip blank / malformed rows
+                continue
+
+            authors = get_cell(row, authors_indices)
+            if not authors:
+                first_name = get_cell(row, first_name_indices)
+                last_name = get_cell(row, last_name_indices)
+                if first_name or last_name:
+                    authors = " ".join(part for part in (first_name, last_name) if part)
+
+            co_authors = clean_none_values(get_multi_cell(row, coauthor_indices))
+            abstract = get_cell(row, abstract_indices)
+            keywords = get_cell(row, keywords_indices)
+            if normalize_header(keywords) in _NONE_VALUES:
+                keywords = ""
+            track = get_cell(row, track_indices)
+            if not track:
+                track = "Weitere Beiträge"
+
             submissions.append(
                 {
-                    "authors": rec.get(colmap.get("authors", ""), "").strip(),
+                    "authors": authors,
+                    "co_authors": co_authors,
                     "title": title,
-                    "abstract": rec.get(colmap.get("abstract", ""), "").strip(),
-                    "track": rec.get(colmap.get("track", ""), "").strip()
-                    or "Weitere Beiträge",
-                    "keywords": rec.get(colmap.get("keywords", ""), "").strip(),
+                    "abstract": abstract,
+                    "track": track,
+                    "keywords": keywords,
                 }
             )
     return submissions
@@ -96,6 +230,14 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
 
     # PDF: render print-oriented HTML, then convert with WeasyPrint.
     pdf_html = env.get_template("boc_pdf.html.j2").render(**ctx)
+    try:
+        from weasyprint import HTML
+    except ImportError as exc:
+        raise RuntimeError(
+            "WeasyPrint is unavailable. Install the required system and Python dependencies "
+            "to generate the PDF."
+        ) from exc
+
     HTML(string=pdf_html, base_url=str(TEMPLATES)).write_pdf(
         str(out_dir / "book_of_contents.pdf")
     )

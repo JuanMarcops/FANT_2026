@@ -6,46 +6,123 @@
 <title>{{ conf.title }} – {{ conf.subtitle }}</title>
 <style>
   :root {
-    --ink: #1a1a1a;
-    --muted: #5c5c5c;
-    --rule: #d8d4cc;
-    --accent: #6b4f2a;       /* understated earth tone */
-    --bg: #ffffff;
-    --measure: 42rem;
+    --ink:    #1A1714;
+    --muted:  #6B5F52;
+    --rule:   #DDD5C8;
+    --terra:  #BB4B27;
+    --ochre:  #C88A2A;
+    --forest: #2B5740;
+    --bg:     #F9F5EF;
+    --measure: 44rem;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font: 16px/1.55 Georgia, "Times New Roman", serif;
+    font: 16px/1.6 Georgia, "Times New Roman", serif;
   }
   .wrap { max-width: var(--measure); margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
-  header { border-bottom: 2px solid var(--ink); padding-bottom: 1rem; margin-bottom: 1.5rem; }
-  h1 { font-size: 1.7rem; line-height: 1.2; margin: 0 0 .3rem; }
-  .subtitle { font-size: 1.05rem; color: var(--muted); margin: 0; }
-  .meta { font-size: .85rem; color: var(--muted); margin-top: .6rem; }
-  .meta a { color: var(--accent); }
 
-  nav.toc { margin: 1.5rem 0 2.5rem; font-family: -apple-system, system-ui, sans-serif; font-size: .9rem; }
-  nav.toc strong { display: block; text-transform: uppercase; letter-spacing: .05em; font-size: .75rem; color: var(--muted); margin-bottom: .4rem; }
+  header { padding-bottom: .6rem; margin-bottom: 1.8rem; }
+  header h1 { font-size: 1.75rem; line-height: 1.2; margin: 0 0 .3rem; }
+  header .subtitle { font-size: 1.05rem; color: var(--muted); margin: 0 0 .5rem; }
+  header .meta { font-size: .85rem; color: var(--muted); margin: 0 0 .75rem; }
+  header .meta a { color: var(--terra); text-decoration: none; }
+  header .meta a:hover { text-decoration: underline; }
+  /* tri-colour band — terracotta / ochre / forest, referencing Pan-African palette */
+  header .triband {
+    height: 4px;
+    background: linear-gradient(
+      90deg,
+      var(--terra)  0 33.34%,
+      var(--ochre)  33.34% 66.67%,
+      var(--forest) 66.67% 100%
+    );
+  }
+
+  nav.toc {
+    margin: 0 0 2.5rem;
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: .875rem;
+  }
+  nav.toc strong {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .72rem;
+    color: var(--muted);
+    margin-bottom: .4rem;
+  }
   nav.toc ol { margin: 0; padding-left: 1.2rem; }
+  nav.toc li { margin-bottom: .15rem; }
   nav.toc a { color: var(--ink); text-decoration: none; }
-  nav.toc a:hover { color: var(--accent); }
+  nav.toc a:hover { color: var(--terra); }
 
-  section.session { margin-bottom: 2.5rem; }
+  section.session { margin-bottom: 2.8rem; }
   section.session > h2 {
     font-family: -apple-system, system-ui, sans-serif;
-    font-size: 1.15rem; border-bottom: 1px solid var(--rule);
-    padding-bottom: .3rem; margin: 0 0 1.2rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--forest);
+    letter-spacing: .01em;
+    margin: 0 0 1.2rem;
+    padding-bottom: .3rem;
+    border-bottom: 1px solid var(--rule);
   }
-  article.entry { margin: 0 0 1.6rem; padding-left: .9rem; border-left: 3px solid var(--rule); }
-  article.entry h3 { font-size: 1.05rem; margin: 0 0 .2rem; }
-  .authors { color: var(--muted); font-style: italic; margin: 0 0 .5rem; }
-  .abstract { margin: 0 0 .4rem; }
-  .keywords { font-family: -apple-system, system-ui, sans-serif; font-size: .8rem; color: var(--muted); }
-  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule); font-size: .8rem; color: var(--muted); }
-  @media (max-width: 480px) { .wrap { padding-top: 1.5rem; } h1 { font-size: 1.4rem; } }
+  /* small tri-stripe before each section heading */
+  section.session > h2::before {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 2.2rem;
+    margin-bottom: .5rem;
+    background: linear-gradient(
+      90deg,
+      var(--terra)  0 33.34%,
+      var(--ochre)  33.34% 66.67%,
+      var(--forest) 66.67% 100%
+    );
+  }
+
+  article.entry {
+    margin: 0 0 1.6rem;
+    padding-left: .9rem;
+    border-left: 3px solid var(--ochre);
+  }
+  article.entry h3 { font-size: 1.05rem; margin: 0 0 .25rem; line-height: 1.35; }
+
+  /* rider: presenter line + co-authors line */
+  p.presenter { font-style: italic; color: var(--ink); margin: 0 0 .1rem; }
+  p.coauthors {
+    font-style: italic;
+    font-size: .855rem;
+    color: var(--muted);
+    margin: 0 0 .5rem;
+  }
+  p.coauthors::before { content: "↳ "; color: var(--ochre); font-style: normal; }
+
+  p.abstract { margin: 0 0 .4rem; }
+  p.keywords {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: .78rem;
+    color: var(--muted);
+    margin: 0;
+  }
+  p.keywords::before { content: "· "; }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: .78rem;
+    color: var(--muted);
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  @media (max-width: 480px) {
+    .wrap { padding-top: 1.5rem; }
+    header h1 { font-size: 1.4rem; }
+  }
 </style>
 </head>
 <body>
@@ -58,6 +135,7 @@
       {{ total }} Beiträge ·
       <a href="book_of_contents.pdf">PDF herunterladen</a>
     </p>
+    <div class="triband" aria-hidden="true"></div>
   </header>
 
   <nav class="toc">
@@ -75,9 +153,10 @@
     {% for e in block.entries %}
     <article class="entry">
       <h3>{{ e.title }}</h3>
-      {% if e.authors %}<p class="authors">{{ e.authors }}</p>{% endif %}
+      {% if e.authors %}<p class="presenter">{{ e.authors }}</p>{% endif %}
+      {% if e.co_authors %}<p class="coauthors">{{ e.co_authors | join(" · ") }}</p>{% endif %}
       {% if e.abstract %}<p class="abstract">{{ e.abstract }}</p>{% endif %}
-      {% if e.keywords %}<p class="keywords">Schlagwörter: {{ e.keywords }}</p>{% endif %}
+      {% if e.keywords %}<p class="keywords">{{ e.keywords }}</p>{% endif %}
     </article>
     {% endfor %}
   </section>

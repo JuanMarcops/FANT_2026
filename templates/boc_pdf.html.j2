@@ -7,36 +7,76 @@
   @page {
     size: A4;
     margin: 22mm 20mm 20mm;
-    @bottom-center { content: counter(page); font: 9pt Georgia, serif; color: #666; }
-    @top-right { content: "{{ conf.title }}"; font: 8pt Georgia, serif; color: #999; }
+    @bottom-center { content: counter(page); font: 9pt Georgia, serif; color: #888; }
+    @top-right { content: "{{ conf.title }}"; font: 8pt Georgia, serif; color: #aaa; }
   }
   @page :first { @top-right { content: ""; } @bottom-center { content: ""; } }
 
-  body { font: 11pt/1.5 Georgia, "Times New Roman", serif; color: #1a1a1a; }
+  body { font: 11pt/1.55 Georgia, "Times New Roman", serif; color: #1A1714; background: #fff; }
 
   /* Title page */
   .titlepage { text-align: center; page-break-after: always; padding-top: 28%; }
-  .titlepage h1 { font-size: 24pt; margin: 0 0 .4rem; }
-  .titlepage .subtitle { font-size: 14pt; color: #555; margin: 0 0 1.5rem; }
-  .titlepage .meta { font-size: 11pt; color: #555; }
+  .titlepage h1 { font-size: 22pt; margin: 0 0 .4rem; }
+  .titlepage .subtitle { font-size: 13pt; color: #6B5F52; margin: 0 0 1.5rem; }
+  .titlepage .meta { font-size: 10.5pt; color: #6B5F52; }
+  /* tri-colour rule on title page */
+  .titlepage .triband {
+    width: 60mm;
+    height: 4pt;
+    margin: 2rem auto 0;
+  }
+  /* WeasyPrint renders linear-gradient on block elements */
+  .triband {
+    background: linear-gradient(
+      90deg,
+      #BB4B27 0 33.34%,
+      #C88A2A 33.34% 66.67%,
+      #2B5740 66.67% 100%
+    );
+  }
 
   /* Table of contents */
   .toc { page-break-after: always; }
-  .toc h2 { font-size: 14pt; border-bottom: 1px solid #000; padding-bottom: .2rem; }
+  .toc h2 {
+    font-size: 13pt;
+    border-bottom: 1pt solid #1A1714;
+    padding-bottom: .2rem;
+    margin-bottom: .8rem;
+  }
   .toc ol { padding-left: 1.4rem; }
   .toc li { margin-bottom: .25rem; }
 
   section.session { page-break-inside: auto; }
   section.session > h2 {
-    font-size: 13pt; border-bottom: 1px solid #000;
-    padding-bottom: .2rem; margin-top: 1.4rem;
+    font-size: 12pt;
+    color: #2B5740;
+    border-bottom: 1pt solid #DDD5C8;
+    padding-bottom: .2rem;
+    margin: 1.4rem 0 1rem;
     page-break-after: avoid;
   }
-  article.entry { margin-bottom: 1rem; page-break-inside: avoid; }
-  article.entry h3 { font-size: 11.5pt; margin: 0 0 .15rem; page-break-after: avoid; }
-  .authors { font-style: italic; color: #444; margin: 0 0 .35rem; }
-  .abstract { margin: 0 0 .3rem; text-align: justify; }
-  .keywords { font-size: 9pt; color: #555; }
+
+  article.entry {
+    margin-bottom: .9rem;
+    padding-left: .75rem;
+    border-left: 2.5pt solid #C88A2A;
+    page-break-inside: avoid;
+  }
+  article.entry h3 {
+    font-size: 11pt;
+    margin: 0 0 .15rem;
+    page-break-after: avoid;
+  }
+  /* rider */
+  p.presenter { font-style: italic; color: #1A1714; margin: 0 0 .1rem; }
+  p.coauthors {
+    font-style: italic;
+    font-size: 9.5pt;
+    color: #6B5F52;
+    margin: 0 0 .35rem;
+  }
+  p.abstract { margin: 0 0 .3rem; text-align: justify; }
+  p.keywords { font-size: 8.5pt; color: #6B5F52; margin: 0; }
 </style>
 </head>
 <body>
@@ -44,6 +84,7 @@
     <h1>{{ conf.title }}</h1>
     <p class="subtitle">{{ conf.subtitle }}</p>
     <p class="meta">{{ conf.dates }}<br>{{ conf.location }}<br><br>{{ total }} Beiträge</p>
+    <div class="triband" style="width:60mm;height:4pt;margin:2rem auto 0;"></div>
   </div>
 
   <div class="toc">
@@ -59,9 +100,10 @@
     {% for e in block.entries %}
     <article class="entry">
       <h3>{{ e.title }}</h3>
-      {% if e.authors %}<p class="authors">{{ e.authors }}</p>{% endif %}
+      {% if e.authors %}<p class="presenter">{{ e.authors }}</p>{% endif %}
+      {% if e.co_authors %}<p class="coauthors">{{ e.co_authors | join(" · ") }}</p>{% endif %}
       {% if e.abstract %}<p class="abstract">{{ e.abstract }}</p>{% endif %}
-      {% if e.keywords %}<p class="keywords">Schlagwörter: {{ e.keywords }}</p>{% endif %}
+      {% if e.keywords %}<p class="keywords">{{ e.keywords }}</p>{% endif %}
     </article>
     {% endfor %}
   </section>
