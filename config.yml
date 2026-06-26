@@ -2,12 +2,12 @@
 # so the Python code stays generic and reusable.
 
 conference:
-  title: "Beispiel-Konferenz 2026"
+  title: "FANT 2026"
   subtitle: "Book of Contents / Abstractband"
   dates: "12.–14. November 2026"
   location: "Goethe-Universität Frankfurt am Main"
   # Public base URL of the GitHub Pages site (shown in the footer).
-  site_url: "https://USERNAME.github.io/boc/"
+  site_url: "https://juanmarcops.github.io/FANT_2026/"
 
 # CSV exported from the Google Form / Sheet and committed into the repo.
 input:
@@ -24,6 +24,9 @@ input:
     co_authors:
       - "Co-authors"
       - "Co-author"
+    institution:
+      - "Institutional affiliation"
+      - "Institutionelle Zugehörigkeit"
     title:
       - "Title of the contribution"
       - "Titel des Beitrags"
@@ -52,7 +55,6 @@ input:
 # Order of sessions in the BoC. Tracks not listed here are appended
 # alphabetically. Leave empty to sort all tracks alphabetically.
 session_order:
-  - "Keynote"
-  - "Session 1"
-  - "Session 2"
-  - "Poster"
+  - "Presentations"
+  - "Posters"
+  - "Roundtables"

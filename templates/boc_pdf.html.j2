@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <style>
-  /* Print layout: A4, page numbers, running header. */
   @page {
     size: A4;
     margin: 22mm 20mm 20mm;
@@ -14,38 +13,30 @@
 
   body { font: 11pt/1.55 Georgia, "Times New Roman", serif; color: #1A1714; background: #fff; }
 
-  /* Title page */
-  .titlepage { text-align: center; page-break-after: always; padding-top: 28%; }
+  /* ── Title page ── */
+  .titlepage { text-align: center; page-break-after: always; padding-top: 24%; }
+  .titlepage img { height: 60pt; margin-bottom: 1.5rem; display: block; margin-left: auto; margin-right: auto; }
   .titlepage h1 { font-size: 22pt; margin: 0 0 .4rem; }
-  .titlepage .subtitle { font-size: 13pt; color: #6B5F52; margin: 0 0 1.5rem; }
+  .titlepage .subtitle { font-size: 13pt; color: #6B5F52; margin: 0 0 1.2rem; }
   .titlepage .meta { font-size: 10.5pt; color: #6B5F52; }
-  /* tri-colour rule on title page */
-  .titlepage .triband {
-    width: 60mm;
-    height: 4pt;
-    margin: 2rem auto 0;
-  }
-  /* WeasyPrint renders linear-gradient on block elements */
-  .triband {
-    background: linear-gradient(
-      90deg,
-      #BB4B27 0 33.34%,
-      #C88A2A 33.34% 66.67%,
-      #2B5740 66.67% 100%
-    );
-  }
+  .triband { width: 55mm; height: 4pt; margin: 2rem auto 0;
+    background: linear-gradient(90deg, #BB4B27 0 33.34%, #C88A2A 33.34% 66.67%, #2B5740 66.67% 100%); }
 
-  /* Table of contents */
-  .toc { page-break-after: always; }
-  .toc h2 {
-    font-size: 13pt;
-    border-bottom: 1pt solid #1A1714;
-    padding-bottom: .2rem;
-    margin-bottom: .8rem;
+  /* ── Intro ── */
+  .intro {
+    page-break-after: always;
+    font-size: 10.5pt;
+    line-height: 1.6;
   }
+  .intro p:first-child { margin-top: 0; }
+
+  /* ── TOC ── */
+  .toc { page-break-after: always; }
+  .toc h2 { font-size: 13pt; border-bottom: 1pt solid #1A1714; padding-bottom: .2rem; margin-bottom: .8rem; }
   .toc ol { padding-left: 1.4rem; }
   .toc li { margin-bottom: .25rem; }
 
+  /* ── Sessions ── */
   section.session { page-break-inside: auto; }
   section.session > h2 {
     font-size: 12pt;
@@ -56,36 +47,44 @@
     page-break-after: avoid;
   }
 
-  article.entry {
-    margin-bottom: .9rem;
-    padding-left: .75rem;
-    border-left: 2.5pt solid #C88A2A;
-    page-break-inside: avoid;
+  /* ── Entry ── */
+  article.entry { margin-bottom: 1rem; padding-left: .7rem; border-left: 2.5pt solid #C88A2A; page-break-inside: avoid; }
+  article.entry h3 { font-size: 11pt; margin: 0 0 .2rem; page-break-after: avoid; }
+
+  /* ── Byline ── */
+  .byline { margin-bottom: .35rem; }
+  p.presenter { font-style: italic; margin: 0 0 .05rem; font-size: 10.5pt; }
+  p.presenter .institution {
+    font-style: normal;
+    font-size: 9pt;
+    color: #BB4B27;
   }
-  article.entry h3 {
-    font-size: 11pt;
-    margin: 0 0 .15rem;
-    page-break-after: avoid;
-  }
-  /* rider */
-  p.presenter { font-style: italic; color: #1A1714; margin: 0 0 .1rem; }
+  p.presenter .institution::before { content: " · "; color: #DDD5C8; }
   p.coauthors {
     font-style: italic;
-    font-size: 9.5pt;
-    color: #6B5F52;
-    margin: 0 0 .35rem;
+    font-size: 10pt;
+    color: #1A1714;
+    margin: 0;
+    padding-left: .5rem;
+    border-left: 1.5pt solid #DDD5C8;
   }
+
   p.abstract { margin: 0 0 .3rem; text-align: justify; }
   p.keywords { font-size: 8.5pt; color: #6B5F52; margin: 0; }
 </style>
 </head>
 <body>
   <div class="titlepage">
+    {% if has_logo %}<img src="logo.png" alt="{{ conf.title }}">{% endif %}
     <h1>{{ conf.title }}</h1>
     <p class="subtitle">{{ conf.subtitle }}</p>
     <p class="meta">{{ conf.dates }}<br>{{ conf.location }}<br><br>{{ total }} Beiträge</p>
-    <div class="triband" style="width:60mm;height:4pt;margin:2rem auto 0;"></div>
+    <div class="triband"></div>
   </div>
+
+  {% if intro %}
+  <div class="intro">{{ intro | safe }}</div>
+  {% endif %}
 
   <div class="toc">
     <h2>Inhalt</h2>
@@ -100,8 +99,16 @@
     {% for e in block.entries %}
     <article class="entry">
       <h3>{{ e.title }}</h3>
-      {% if e.authors %}<p class="presenter">{{ e.authors }}</p>{% endif %}
-      {% if e.co_authors %}<p class="coauthors">{{ e.co_authors | join(" · ") }}</p>{% endif %}
+      <div class="byline">
+        {% if e.authors %}
+        <p class="presenter">
+          {{ e.authors }}{% if e.institution %}<span class="institution">{{ e.institution }}</span>{% endif %}
+        </p>
+        {% endif %}
+        {% if e.co_authors %}
+        <p class="coauthors">{{ e.co_authors | join(" · ") }}</p>
+        {% endif %}
+      </div>
       {% if e.abstract %}<p class="abstract">{{ e.abstract }}</p>{% endif %}
       {% if e.keywords %}<p class="keywords">{{ e.keywords }}</p>{% endif %}
     </article>
