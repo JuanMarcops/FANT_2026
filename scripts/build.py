@@ -17,6 +17,7 @@ All conference-specific settings live in config.yml, not here.
 
 import argparse
 import csv
+import re
 import shutil
 import sys
 import unicodedata
@@ -95,6 +96,54 @@ _NONE_VALUES = frozenset({"none", "n/a", "no", "-", "–", "keine", "no co-autho
 
 def clean_none_values(values: list[str]) -> list[str]:
     return [v for v in values if normalize_header(v) not in _NONE_VALUES]
+
+
+# ── Case normalisation ──────────────────────────────────────────────────────
+# Rules applied only when a string is >65 % uppercase letters:
+#   1. Mixed-case tokens (e.g. AAArC, SfM) are assumed intentional → kept.
+#   2. All-caps tokens that are common stop words → lowercased (except position 0).
+#   3. All-caps tokens ≤ 3 letters (not stop words) → assumed acronym → kept.
+#   4. Everything else → capitalized (first letter upper, rest lower).
+
+_ACRONYM_MAX = 3
+
+_STOP_WORDS = frozenset({
+    # English
+    "a", "an", "and", "as", "at", "but", "by", "for", "from",
+    "in", "is", "nor", "of", "on", "or", "the", "to", "up", "via", "with",
+    # German (after umlaut-stripping: für→fur, über→uber, etc.)
+    "am", "an", "auf", "aus", "bei", "das", "dem", "den", "der", "des",
+    "die", "ein", "fur", "im", "mit", "nach", "oder", "uber", "und",
+    "von", "vor", "zu", "zur",
+})
+
+
+def _normalize_word(word: str, is_first: bool = False) -> str:
+    m = re.match(r'^([^A-Za-z0-9]*)(.+?)([^A-Za-z0-9]*)$', word)
+    if not m:
+        return word
+    pre, core, post = m.group(1), m.group(2), m.group(3)
+    letters = re.sub(r'[^A-Za-z]', '', core)
+    if not letters or not letters.isupper():          # mixed case → intentional
+        return word
+    if not is_first and letters.lower() in _STOP_WORDS:  # stop word → lowercase
+        return pre + core.lower() + post
+    if len(letters) <= _ACRONYM_MAX:                  # short all-caps → acronym
+        return word
+    return pre + core[0].upper() + core[1:].lower() + post
+
+
+def normalize_case(text: str) -> str:
+    """Convert predominantly ALL-CAPS text to capitalised words; leave normal text untouched."""
+    if not text:
+        return text
+    letters = [c for c in text if c.isalpha()]
+    if len(letters) < 4:
+        return text
+    if sum(1 for c in letters if c.isupper()) / len(letters) <= 0.65:
+        return text
+    words = text.split()
+    return ' '.join(_normalize_word(w, i == 0) for i, w in enumerate(words))
 
 
 _FORMAT_MAP = {
@@ -176,7 +225,7 @@ def read_csv(path: Path, colmap: dict) -> list[dict]:
 
             format_value = get_cell(row, format_indices)
 
-            title = get_cell(row, title_indices)
+            title = normalize_case(get_cell(row, title_indices))
             if not title:
                 continue
 
@@ -185,15 +234,17 @@ def read_csv(path: Path, colmap: dict) -> list[dict]:
                 # Skip registrations without a real contribution (e.g. "I just want to attend")
                 continue
 
-            authors = get_cell(row, authors_indices)
+            authors = normalize_case(get_cell(row, authors_indices))
             if not authors:
                 first_name = get_cell(row, first_name_indices)
                 last_name = get_cell(row, last_name_indices)
                 if first_name or last_name:
-                    authors = " ".join(part for part in (first_name, last_name) if part)
+                    authors = normalize_case(
+                        " ".join(part for part in (first_name, last_name) if part)
+                    )
 
-            co_authors = clean_none_values(get_multi_cell(row, coauthor_indices))
-            institution = get_cell(row, institution_indices)
+            co_authors = [normalize_case(v) for v in clean_none_values(get_multi_cell(row, coauthor_indices))]
+            institution = normalize_case(get_cell(row, institution_indices))
             keywords = get_cell(row, keywords_indices)
             if normalize_header(keywords) in _NONE_VALUES:
                 keywords = ""

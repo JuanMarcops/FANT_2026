@@ -33,8 +33,12 @@
   /* ── TOC ── */
   .toc { page-break-after: always; }
   .toc h2 { font-size: 13pt; border-bottom: 1pt solid #1A1714; padding-bottom: .2rem; margin-bottom: .8rem; }
-  .toc ol { padding-left: 1.4rem; }
-  .toc li { margin-bottom: .25rem; }
+  .toc-section { margin-bottom: .9rem; }
+  .toc-track { font-weight: bold; font-size: 10.5pt; color: #2B5740; margin: 0 0 .2rem; }
+  .toc-entries { list-style: none; margin: 0 0 0 .5rem; padding: 0 0 0 .6rem; border-left: 1.5pt solid #DDD5C8; }
+  .toc-entries li { margin-bottom: .3rem; line-height: 1.3; }
+  .toc-entry-title { font-size: 9.5pt; }
+  .toc-entry-presenter { display: block; font-size: 8.5pt; font-style: italic; color: #6B5F52; }
 
   /* ── Sessions ── */
   section.session { page-break-inside: auto; }
@@ -88,9 +92,19 @@
 
   <div class="toc">
     <h2>Inhalt</h2>
-    <ol>
-      {% for block in sessions %}<li>{{ block.track }} ({{ block.entries|length }})</li>{% endfor %}
-    </ol>
+    {% for block in sessions %}
+    <div class="toc-section">
+      <p class="toc-track">{{ block.track }} ({{ block.entries|length }})</p>
+      <ol class="toc-entries">
+        {% for e in block.entries %}
+        <li>
+          <span class="toc-entry-title">{{ e.title }}</span>
+          <span class="toc-entry-presenter">{{ e.authors }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endfor %}
   </div>
 
   {% for block in sessions %}
