@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(git -C \"d:\\\\Git\\\\FANT_2026\" add scripts/build.py templates/boc_web.html.j2 templates/boc_pdf.html.j2)",
+      "PowerShell(py -m pip install python-docx --quiet 2>&1)",
+      "PowerShell(git -C \"d:\\\\Git\\\\FANT_2026\" add data/intro.html data/intro.html.docx)",
+      "PowerShell(git -C \"d:\\\\Git\\\\FANT_2026\" commit -m \"Add intro text \\(converted from intro.html.docx\\)\" 2>&1)"
+    ]
+  }
+}
