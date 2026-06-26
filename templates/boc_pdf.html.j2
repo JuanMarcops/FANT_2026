@@ -5,11 +5,15 @@
 <style>
   @page {
     size: A4;
-    margin: 22mm 20mm 20mm;
+    margin: 28mm 20mm 20mm;
     @bottom-center { content: counter(page); font: 9pt Georgia, serif; color: #888; }
     @top-right { content: "{{ conf.title }}"; font: 8pt Georgia, serif; color: #aaa; }
+    @top-left { content: element(headerLogo); }
   }
-  @page :first { @top-right { content: ""; } @bottom-center { content: ""; } }
+  @page :first { @top-left { content: ""; } @top-right { content: ""; } @bottom-center { content: ""; } }
+
+  #header-logo { position: running(headerLogo); }
+  #header-logo img { height: 18pt; width: auto; display: block; }
 
   body { font: 11pt/1.55 Georgia, "Times New Roman", serif; color: #1A1714; background: #fff; }
 
@@ -34,8 +38,8 @@
   .toc-entries { list-style: none; margin: 0 0 0 .5rem; padding: 0 0 0 .6rem; border-left: 1.5pt solid #DDD5C8; }
   .toc-entries li { margin-bottom: .35rem; line-height: 1.3; }
   .toc-entry-title { font-size: 9.5pt; }
-  .toc-byline { display: block; font-size: 8.5pt; font-style: italic; color: #6B5F52; }
-  .toc-coauthors { color: #1A1714; }
+  .toc-byline { display: block; font-size: 8.5pt; font-style: italic; font-weight: 600; color: #6B5F52; }
+  .toc-coauthors { display: block; font-size: 8pt; font-style: italic; font-weight: 400; color: #6B5F52; padding-left: .4em; }
 
   /* ── Sessions ── */
   section.session { page-break-inside: auto; }
@@ -52,16 +56,17 @@
 
   /* ── Byline ── */
   .byline { margin-bottom: .35rem; }
-  p.presenter { font-style: italic; margin: 0 0 .05rem; font-size: 10.5pt; }
-  p.presenter .institution { font-style: normal; font-size: 9pt; color: #BB4B27; }
+  p.presenter { font-style: italic; font-weight: 600; margin: 0 0 .05rem; font-size: 10.5pt; }
+  p.presenter .institution { font-style: normal; font-weight: 400; font-size: 9pt; color: #BB4B27; }
   p.presenter .institution::before { content: " · "; color: #DDD5C8; }
-  p.coauthors { font-style: italic; font-size: 10pt; color: #1A1714; margin: 0; padding-left: .5rem; border-left: 1.5pt solid #DDD5C8; }
+  p.coauthors { font-style: italic; font-size: 10pt; color: #6B5F52; margin: 0; padding-left: .5rem; border-left: 1.5pt solid #DDD5C8; }
 
   p.abstract { margin: 0 0 .3rem; text-align: justify; }
   p.keywords { font-size: 8.5pt; color: #6B5F52; margin: 0; }
 </style>
 </head>
 <body>
+  {% if has_logo %}<div id="header-logo"><img src="logo.png" alt="{{ conf.title }}"></div>{% endif %}
   <div class="titlepage">
     {% if has_logo %}<img src="logo.png" alt="{{ conf.title }}">{% endif %}
     <h1>{{ conf.title }}</h1>
@@ -83,9 +88,8 @@
         {% for e in block.entries %}
         <li>
           <span class="toc-entry-title">{{ e.title }}</span>
-          <span class="toc-byline">
-            {{ e.authors }}{% if e.co_authors %} · <span class="toc-coauthors">{{ e.co_authors | join(" · ") }}</span>{% endif %}
-          </span>
+          <span class="toc-byline">{{ e.authors }}</span>
+          {% if e.co_authors %}<span class="toc-coauthors">{{ e.co_authors | join(", ") }}</span>{% endif %}
         </li>
         {% endfor %}
       </ol>
@@ -106,7 +110,7 @@
         </p>
         {% endif %}
         {% if e.co_authors %}
-        <p class="coauthors">{{ e.co_authors | join(" · ") }}</p>
+        <p class="coauthors">{{ e.co_authors | join(", ") }}</p>
         {% endif %}
       </div>
       {% if e.abstract %}<p class="abstract">{{ e.abstract }}</p>{% endif %}

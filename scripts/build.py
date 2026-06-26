@@ -293,9 +293,6 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
     if has_logo:
         shutil.copy(logo_src, out_dir / "logo.png")
 
-    intro_path = ROOT / "data" / "intro.html"
-    intro_html = intro_path.read_text(encoding="utf-8") if intro_path.exists() else ""
-
     try:
         from weasyprint import HTML as WPHtml
     except ImportError as exc:
@@ -308,6 +305,11 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
     generated = date.today().isoformat()
 
     for lang_code, t in i18n.items():
+        lang_intro = ROOT / "data" / f"intro-{lang_code}.html"
+        fallback_intro = ROOT / "data" / "intro.html"
+        intro_path = lang_intro if lang_intro.exists() else fallback_intro
+        intro_html = intro_path.read_text(encoding="utf-8") if intro_path.exists() else ""
+
         html_name = "index.html" if lang_code == "de" else f"index-{lang_code}.html"
         ctx = {
             "conf": cfg["conference"],
@@ -327,7 +329,7 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
         pdf_name = t.get("pdf_file", f"book_of_contents_{lang_code}.pdf")
         WPHtml(
             string=env.get_template("boc_pdf.html.j2").render(**ctx),
-            base_url=str(TEMPLATES),
+            base_url=str(out_dir),
         ).write_pdf(str(out_dir / pdf_name))
 
     print(f"Rendered {total} entries → {out_dir}/  ({len(i18n)} language(s))")

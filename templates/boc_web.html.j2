@@ -22,15 +22,19 @@
     color: var(--ink);
     font: 16px/1.6 Georgia, "Times New Roman", serif;
   }
-  .wrap { max-width: var(--measure); margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 
   /* ── Header ── */
-  header { padding-bottom: .6rem; margin-bottom: 1.8rem; }
+  header { background: #fff; }
+  .header-inner {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 1.4rem 1.25rem .9rem;
+  }
   .header-top {
     display: flex;
     align-items: flex-start;
     gap: 1.2rem;
-    margin-bottom: .6rem;
   }
   .logo { height: 4rem; width: auto; flex-shrink: 0; }
   .header-text { flex: 1; }
@@ -54,7 +58,6 @@
   .lang-switch a:hover { background: var(--forest); color: #fff; }
   .triband {
     height: 4px;
-    margin-top: .9rem;
     background: linear-gradient(
       90deg,
       var(--terra)  0 33.34%,
@@ -113,11 +116,18 @@
     display: block;
     font-size: .77rem;
     font-style: italic;
+    font-weight: 600;
     color: var(--muted);
     margin-top: .05rem;
   }
-  .toc-coauthors { color: var(--ink); }
-  .toc-sep { color: var(--rule); margin: 0 .2rem; }
+  .toc-coauthors {
+    display: block;
+    font-size: .75rem;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--muted);
+    padding-left: .5em;
+  }
 
   /* ── Sessions ── */
   section.session { margin-bottom: 2.8rem; }
@@ -155,9 +165,10 @@
 
   /* ── Byline ── */
   .byline { margin: 0 0 .55rem; }
-  p.presenter { font-style: italic; margin: 0 0 .05rem; font-size: 1rem; }
+  p.presenter { font-style: italic; font-weight: 600; margin: 0 0 .05rem; font-size: 1rem; }
   p.presenter .institution {
     font-style: normal;
+    font-weight: 400;
     font-size: .85em;
     color: var(--terra);
     font-family: -apple-system, system-ui, sans-serif;
@@ -166,7 +177,7 @@
   p.coauthors {
     font-style: italic;
     font-size: .95rem;
-    color: var(--ink);
+    color: var(--muted);
     margin: 0;
     padding-left: .75rem;
     border-left: 2px solid var(--rule);
@@ -189,6 +200,7 @@
     font-family: -apple-system, system-ui, sans-serif;
   }
   @media (max-width: 520px) {
+    .header-inner { padding: 1rem 1.25rem .7rem; }
     .header-top { flex-direction: column; gap: .6rem; }
     .logo { height: 3rem; }
     header h1 { font-size: 1.4rem; }
@@ -196,8 +208,8 @@
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
+<header>
+  <div class="header-inner">
     <div class="header-top">
       {% if has_logo %}<img src="logo.png" class="logo" alt="{{ conf.title }}">{% endif %}
       <div class="header-text">
@@ -211,9 +223,10 @@
         <p class="lang-switch"><a href="{{ t.alt_page }}" hreflang="{{ t.lang_attr == 'de' and 'en' or 'de' }}">{{ t.alt_label }}</a></p>
       </div>
     </div>
-    <div class="triband" aria-hidden="true"></div>
-  </header>
-
+  </div>
+  <div class="triband" aria-hidden="true"></div>
+</header>
+<div class="wrap">
   {% if intro %}
   <section class="intro">{{ intro | safe }}</section>
   {% endif %}
@@ -228,9 +241,8 @@
         {% for e in block.entries %}
         <li>
           <a href="#e{{ si }}-{{ loop.index }}">{{ e.title }}</a>
-          <span class="toc-byline">
-            {{ e.authors }}{% if e.co_authors %}<span class="toc-sep">·</span><span class="toc-coauthors">{{ e.co_authors | join(" · ") }}</span>{% endif %}
-          </span>
+          <span class="toc-byline">{{ e.authors }}</span>
+          {% if e.co_authors %}<span class="toc-coauthors">{{ e.co_authors | join(", ") }}</span>{% endif %}
         </li>
         {% endfor %}
       </ol>
@@ -252,7 +264,7 @@
         </p>
         {% endif %}
         {% if e.co_authors %}
-        <p class="coauthors">{{ e.co_authors | join(" · ") }}</p>
+        <p class="coauthors">{{ e.co_authors | join(", ") }}</p>
         {% endif %}
       </div>
       {% if e.abstract %}<p class="abstract">{{ e.abstract }}</p>{% endif %}
