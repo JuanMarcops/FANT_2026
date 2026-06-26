@@ -58,3 +58,35 @@ session_order:
   - "Presentations"
   - "Posters"
   - "Roundtables"
+
+# UI labels per language. All structural text uses these keys; abstract
+# content is never translated. Add more language blocks to add more outputs.
+i18n:
+  de:
+    lang_attr: "de"
+    tracks:
+      Presentations: "Präsentationen"
+      Posters: "Poster"
+      Roundtables: "Runde Tische"
+      Other: "Weitere Beiträge"
+    contents: "Inhalt"
+    download_pdf: "PDF herunterladen"
+    pdf_file: "book_of_contents_de.pdf"
+    generated: "Automatisch generiert am"
+    contributions: "Beiträge"
+    alt_page: "index-en.html"
+    alt_label: "English"
+  en:
+    lang_attr: "en"
+    tracks:
+      Presentations: "Presentations"
+      Posters: "Posters"
+      Roundtables: "Roundtables"
+      Other: "Other Contributions"
+    contents: "Contents"
+    download_pdf: "Download PDF"
+    pdf_file: "book_of_contents_en.pdf"
+    generated: "Automatically generated on"
+    contributions: "contributions"
+    alt_page: "index.html"
+    alt_label: "Deutsch"

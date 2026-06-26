@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="{{ lang }}">
 <head>
 <meta charset="utf-8">
 <style>
@@ -23,11 +23,7 @@
     background: linear-gradient(90deg, #BB4B27 0 33.34%, #C88A2A 33.34% 66.67%, #2B5740 66.67% 100%); }
 
   /* ── Intro ── */
-  .intro {
-    page-break-after: always;
-    font-size: 10.5pt;
-    line-height: 1.6;
-  }
+  .intro { page-break-after: always; font-size: 10.5pt; line-height: 1.6; }
   .intro p:first-child { margin-top: 0; }
 
   /* ── TOC ── */
@@ -36,18 +32,17 @@
   .toc-section { margin-bottom: .9rem; }
   .toc-track { font-weight: bold; font-size: 10.5pt; color: #2B5740; margin: 0 0 .2rem; }
   .toc-entries { list-style: none; margin: 0 0 0 .5rem; padding: 0 0 0 .6rem; border-left: 1.5pt solid #DDD5C8; }
-  .toc-entries li { margin-bottom: .3rem; line-height: 1.3; }
+  .toc-entries li { margin-bottom: .35rem; line-height: 1.3; }
   .toc-entry-title { font-size: 9.5pt; }
-  .toc-entry-presenter { display: block; font-size: 8.5pt; font-style: italic; color: #6B5F52; }
+  .toc-byline { display: block; font-size: 8.5pt; font-style: italic; color: #6B5F52; }
+  .toc-coauthors { color: #1A1714; }
 
   /* ── Sessions ── */
   section.session { page-break-inside: auto; }
   section.session > h2 {
-    font-size: 12pt;
-    color: #2B5740;
+    font-size: 12pt; color: #2B5740;
     border-bottom: 1pt solid #DDD5C8;
-    padding-bottom: .2rem;
-    margin: 1.4rem 0 1rem;
+    padding-bottom: .2rem; margin: 1.4rem 0 1rem;
     page-break-after: avoid;
   }
 
@@ -58,20 +53,9 @@
   /* ── Byline ── */
   .byline { margin-bottom: .35rem; }
   p.presenter { font-style: italic; margin: 0 0 .05rem; font-size: 10.5pt; }
-  p.presenter .institution {
-    font-style: normal;
-    font-size: 9pt;
-    color: #BB4B27;
-  }
+  p.presenter .institution { font-style: normal; font-size: 9pt; color: #BB4B27; }
   p.presenter .institution::before { content: " · "; color: #DDD5C8; }
-  p.coauthors {
-    font-style: italic;
-    font-size: 10pt;
-    color: #1A1714;
-    margin: 0;
-    padding-left: .5rem;
-    border-left: 1.5pt solid #DDD5C8;
-  }
+  p.coauthors { font-style: italic; font-size: 10pt; color: #1A1714; margin: 0; padding-left: .5rem; border-left: 1.5pt solid #DDD5C8; }
 
   p.abstract { margin: 0 0 .3rem; text-align: justify; }
   p.keywords { font-size: 8.5pt; color: #6B5F52; margin: 0; }
@@ -82,7 +66,7 @@
     {% if has_logo %}<img src="logo.png" alt="{{ conf.title }}">{% endif %}
     <h1>{{ conf.title }}</h1>
     <p class="subtitle">{{ conf.subtitle }}</p>
-    <p class="meta">{{ conf.dates }}<br>{{ conf.location }}<br><br>{{ total }} Beiträge</p>
+    <p class="meta">{{ conf.dates }}<br>{{ conf.location }}<br><br>{{ total }} {{ t.contributions }}</p>
     <div class="triband"></div>
   </div>
 
@@ -91,15 +75,17 @@
   {% endif %}
 
   <div class="toc">
-    <h2>Inhalt</h2>
+    <h2>{{ t.contents }}</h2>
     {% for block in sessions %}
     <div class="toc-section">
-      <p class="toc-track">{{ block.track }} ({{ block.entries|length }})</p>
+      <p class="toc-track">{{ t.tracks.get(block.track, block.track) }} ({{ block.entries|length }})</p>
       <ol class="toc-entries">
         {% for e in block.entries %}
         <li>
           <span class="toc-entry-title">{{ e.title }}</span>
-          <span class="toc-entry-presenter">{{ e.authors }}</span>
+          <span class="toc-byline">
+            {{ e.authors }}{% if e.co_authors %} · <span class="toc-coauthors">{{ e.co_authors | join(" · ") }}</span>{% endif %}
+          </span>
         </li>
         {% endfor %}
       </ol>
@@ -109,7 +95,7 @@
 
   {% for block in sessions %}
   <section class="session">
-    <h2>{{ block.track }}</h2>
+    <h2>{{ t.tracks.get(block.track, block.track) }}</h2>
     {% for e in block.entries %}
     <article class="entry">
       <h3>{{ e.title }}</h3>

@@ -248,7 +248,7 @@ def read_csv(path: Path, colmap: dict) -> list[dict]:
             keywords = get_cell(row, keywords_indices)
             if normalize_header(keywords) in _NONE_VALUES:
                 keywords = ""
-            track = get_cell(row, track_indices) or normalize_format(format_value) or "Weitere Beiträge"
+            track = get_cell(row, track_indices) or normalize_format(format_value) or "Other"
 
             submissions.append(
                 {
@@ -286,46 +286,51 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
         autoescape=select_autoescape(["html", "xml"]),
     )
     total = sum(len(s["entries"]) for s in sessions)
-
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy logo if present
     logo_src = ROOT / "data" / "Logo FANT.png"
     has_logo = logo_src.exists()
     if has_logo:
         shutil.copy(logo_src, out_dir / "logo.png")
 
-    # Optional intro block (convert your Word content to data/intro.html)
     intro_path = ROOT / "data" / "intro.html"
     intro_html = intro_path.read_text(encoding="utf-8") if intro_path.exists() else ""
 
-    ctx = {
-        "conf": cfg["conference"],
-        "sessions": sessions,
-        "total": total,
-        "generated": date.today().isoformat(),
-        "has_logo": has_logo,
-        "intro": intro_html,
-    }
-
-    (out_dir / "index.html").write_text(
-        env.get_template("boc_web.html.j2").render(**ctx), encoding="utf-8"
-    )
-
-    # PDF: render print-oriented HTML, then convert with WeasyPrint.
-    pdf_html = env.get_template("boc_pdf.html.j2").render(**ctx)
     try:
-        from weasyprint import HTML
+        from weasyprint import HTML as WPHtml
     except ImportError as exc:
         raise RuntimeError(
             "WeasyPrint is unavailable. Install the required system and Python dependencies "
             "to generate the PDF."
         ) from exc
 
-    HTML(string=pdf_html, base_url=str(TEMPLATES)).write_pdf(
-        str(out_dir / "book_of_contents.pdf")
-    )
-    print(f"Rendered {total} entries -> {out_dir}/index.html + book_of_contents.pdf")
+    i18n = cfg.get("i18n") or {}
+    generated = date.today().isoformat()
+
+    for lang_code, t in i18n.items():
+        html_name = "index.html" if lang_code == "de" else f"index-{lang_code}.html"
+        ctx = {
+            "conf": cfg["conference"],
+            "sessions": sessions,
+            "total": total,
+            "generated": generated,
+            "has_logo": has_logo,
+            "intro": intro_html,
+            "t": t,
+            "lang": t.get("lang_attr", lang_code),
+        }
+
+        (out_dir / html_name).write_text(
+            env.get_template("boc_web.html.j2").render(**ctx), encoding="utf-8"
+        )
+
+        pdf_name = t.get("pdf_file", f"book_of_contents_{lang_code}.pdf")
+        WPHtml(
+            string=env.get_template("boc_pdf.html.j2").render(**ctx),
+            base_url=str(TEMPLATES),
+        ).write_pdf(str(out_dir / pdf_name))
+
+    print(f"Rendered {total} entries → {out_dir}/  ({len(i18n)} language(s))")
 
 
 def main() -> int:
