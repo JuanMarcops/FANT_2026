@@ -17,6 +17,7 @@ All conference-specific settings live in config.yml, not here.
 
 import argparse
 import csv
+import shutil
 import sys
 import unicodedata
 from datetime import date
@@ -96,9 +97,23 @@ def clean_none_values(values: list[str]) -> list[str]:
     return [v for v in values if normalize_header(v) not in _NONE_VALUES]
 
 
-def is_poster_format(value: str) -> bool:
-    value = normalize_header(value)
-    return value in {"poster", "posterbeitrag", "poster contribution", "poster session"}
+_FORMAT_MAP = {
+    "presentation":   "Presentations",
+    "prasentation":   "Presentations",  # Präsentation
+    "vortrag":        "Presentations",
+    "paper":          "Presentations",
+    "poster":         "Posters",
+    "posterbeitrag":  "Posters",
+    "poster contribution": "Posters",
+    "poster session": "Posters",
+    "roundtable":     "Roundtables",
+    "round table":    "Roundtables",
+    "roundtable discussion": "Roundtables",
+}
+
+
+def normalize_format(value: str) -> str:
+    return _FORMAT_MAP.get(normalize_header(value), "")
 
 
 def read_csv(path: Path, colmap: dict) -> list[dict]:
@@ -110,6 +125,7 @@ def read_csv(path: Path, colmap: dict) -> list[dict]:
     defaults = {
         "authors": ["Author / Presenter", "Author:in/ Vortragende:r"],
         "co_authors": ["Co-authors", "Co-author", "Mitautor:innen"],
+        "institution": ["Institutional affiliation", "Institutionelle Zugehörigkeit", "Institution"],
         "title": ["Title of the contribution", "Titel des Beitrags"],
         "abstract": [
             "Abstract (approx. 2–3 sentences)",
@@ -148,6 +164,7 @@ def read_csv(path: Path, colmap: dict) -> list[dict]:
         abstract_indices = find_header_indices(header_index, column_candidates["abstract"])
         track_indices = find_header_indices(header_index, column_candidates["track"])
         keywords_indices = find_header_indices(header_index, column_candidates["keywords"])
+        institution_indices = find_header_indices(header_index, column_candidates["institution"])
         format_indices = find_header_indices(header_index, column_candidates["format"])
         language_indices = find_header_indices(header_index, column_candidates["language"])
         first_name_indices = find_header_indices(header_index, column_candidates["first_name"])
@@ -158,11 +175,14 @@ def read_csv(path: Path, colmap: dict) -> list[dict]:
                 continue
 
             format_value = get_cell(row, format_indices)
-            if is_poster_format(format_value):
-                continue
 
             title = get_cell(row, title_indices)
             if not title:
+                continue
+
+            abstract = get_cell(row, abstract_indices)
+            if not abstract or normalize_header(abstract) in _NONE_VALUES:
+                # Skip registrations without a real contribution (e.g. "I just want to attend")
                 continue
 
             authors = get_cell(row, authors_indices)
@@ -173,18 +193,17 @@ def read_csv(path: Path, colmap: dict) -> list[dict]:
                     authors = " ".join(part for part in (first_name, last_name) if part)
 
             co_authors = clean_none_values(get_multi_cell(row, coauthor_indices))
-            abstract = get_cell(row, abstract_indices)
+            institution = get_cell(row, institution_indices)
             keywords = get_cell(row, keywords_indices)
             if normalize_header(keywords) in _NONE_VALUES:
                 keywords = ""
-            track = get_cell(row, track_indices)
-            if not track:
-                track = "Weitere Beiträge"
+            track = get_cell(row, track_indices) or normalize_format(format_value) or "Weitere Beiträge"
 
             submissions.append(
                 {
                     "authors": authors,
                     "co_authors": co_authors,
+                    "institution": institution,
                     "title": title,
                     "abstract": abstract,
                     "track": track,
@@ -216,14 +235,28 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
         autoescape=select_autoescape(["html", "xml"]),
     )
     total = sum(len(s["entries"]) for s in sessions)
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy logo if present
+    logo_src = ROOT / "data" / "Logo FANT.png"
+    has_logo = logo_src.exists()
+    if has_logo:
+        shutil.copy(logo_src, out_dir / "logo.png")
+
+    # Optional intro block (convert your Word content to data/intro.html)
+    intro_path = ROOT / "data" / "intro.html"
+    intro_html = intro_path.read_text(encoding="utf-8") if intro_path.exists() else ""
+
     ctx = {
         "conf": cfg["conference"],
         "sessions": sessions,
         "total": total,
         "generated": date.today().isoformat(),
+        "has_logo": has_logo,
+        "intro": intro_html,
     }
 
-    out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "index.html").write_text(
         env.get_template("boc_web.html.j2").render(**ctx), encoding="utf-8"
     )
