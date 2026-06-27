@@ -273,7 +273,7 @@ def group_by_session(submissions: list[dict], cfg: dict) -> list[dict]:
 
     # Sort entries within a track by title for stable, reproducible output.
     for entries in by_track.values():
-        entries.sort(key=lambda e: e["authors"].lower())
+        entries.sort(key=lambda e: e["authors"].split()[-1].lower())
 
     ordered = [t for t in order if t in by_track]
     rest = sorted(t for t in by_track if t not in order)
