@@ -2,8 +2,7 @@ name: Build Book of Contents
 
 on:
   push:
-    branches: [main]
-    paths:                    # only rebuild when relevant files change
+    paths:                    # rebuild when relevant files change
       - "data/**"
       - "templates/**"
       - "scripts/**"
@@ -17,7 +16,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
@@ -45,9 +44,22 @@ jobs:
       - name: Build site + PDF
         run: python scripts/build.py --out site
 
-      - uses: actions/upload-pages-artifact@v3
+      # On feature branches: upload a downloadable preview zip instead of deploying
+      - name: Upload preview artifact
+        if: github.ref != 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-preview
+          path: site/
+          retention-days: 7
+
+      # On main only: deploy to GitHub Pages
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
       - id: deploy
+        if: github.ref == 'refs/heads/main'
         uses: actions/deploy-pages@v4
