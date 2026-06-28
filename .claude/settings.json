@@ -4,7 +4,13 @@
       "PowerShell(git -C \"d:\\\\Git\\\\FANT_2026\" add scripts/build.py templates/boc_web.html.j2 templates/boc_pdf.html.j2)",
       "PowerShell(py -m pip install python-docx --quiet 2>&1)",
       "PowerShell(git -C \"d:\\\\Git\\\\FANT_2026\" add data/intro.html data/intro.html.docx)",
-      "PowerShell(git -C \"d:\\\\Git\\\\FANT_2026\" commit -m \"Add intro text \\(converted from intro.html.docx\\)\" 2>&1)"
+      "PowerShell(git -C \"d:\\\\Git\\\\FANT_2026\" commit -m \"Add intro text \\(converted from intro.html.docx\\)\" 2>&1)",
+      "Bash(git config *)",
+      "Bash(git stash *)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --env-filter ' *)",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
