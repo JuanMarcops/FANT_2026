@@ -6,58 +6,79 @@
 <title>{{ conf.title }} – {{ conf.subtitle }}</title>
 <style>
   :root {
-    --ink:    #1A1714;
-    --muted:  #6B5F52;
-    --rule:   #DDD5C8;
-    --terra:  #BB4B27;
-    --ochre:  #C88A2A;
-    --forest: #2B5740;
-    --bg:     #F9F5EF;
-    --measure: 46rem;
+    --ink:     #1A1714;
+    --muted:   #6B5F52;
+    --rule:    #DDD5C8;
+    --terra:   #BB4B27;
+    --ochre:   #C88A2A;
+    --forest:  #2B5740;
+    --bg:      #EDE8E0;
+    --surface: #FDFAF6;
+    --measure: 72rem;
+    --radius:  8px;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font: 16px/1.6 Georgia, "Times New Roman", serif;
+    font: 16px/1.65 Georgia, "Times New Roman", serif;
   }
-  .wrap { max-width: var(--measure); margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  .wrap { max-width: var(--measure); margin: 0 auto; padding: 2.5rem 2rem 5rem; }
 
   /* ── Header ── */
-  header { background: #fff; }
+  header { background: var(--surface); }
   .header-inner {
     max-width: var(--measure);
     margin: 0 auto;
-    padding: 1.4rem 1.25rem .9rem;
+    padding: 1.6rem 2rem 1rem;
   }
   .header-top {
     display: flex;
-    align-items: flex-start;
-    gap: 1.2rem;
+    align-items: center;
+    gap: 1.8rem;
   }
-  .logo { height: 6rem; width: auto; flex-shrink: 0; }
+  .logo { height: 7.5rem; width: auto; flex-shrink: 0; }
   .header-text { flex: 1; }
-  header h1 { font-size: 1.75rem; line-height: 1.2; margin: 0 0 .25rem; }
-  header .subtitle { font-size: 1rem; color: var(--muted); margin: 0 0 .4rem; }
-  header .meta { font-size: .85rem; color: var(--muted); margin: 0; }
+  header h1 {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -.02em;
+    margin: 0 0 .2rem;
+    color: var(--ink);
+  }
+  header .subtitle {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 1rem;
+    color: var(--muted);
+    margin: 0 0 .4rem;
+  }
+  header .meta {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: .82rem;
+    color: var(--muted);
+    margin: 0;
+  }
   header .meta a { color: var(--terra); text-decoration: none; }
   header .meta a:hover { text-decoration: underline; }
   .lang-switch {
     font-family: -apple-system, system-ui, sans-serif;
-    font-size: .8rem;
-    margin-top: .35rem;
+    font-size: .78rem;
+    margin-top: .45rem;
   }
   .lang-switch a {
     color: var(--forest);
     text-decoration: none;
-    border: 1px solid var(--forest);
-    padding: .15rem .5rem;
-    border-radius: 3px;
+    border: 1.5px solid var(--forest);
+    padding: .2rem .65rem;
+    border-radius: 20px;
+    font-weight: 500;
   }
   .lang-switch a:hover { background: var(--forest); color: #fff; }
   .triband {
-    height: 4px;
+    height: 5px;
     background: linear-gradient(
       90deg,
       var(--terra)  0 33.34%,
@@ -66,87 +87,111 @@
     );
   }
 
+  /* ── Intro + TOC row ── */
+  .intro-toc-row {
+    display: grid;
+    grid-template-columns: 5fr 8fr;
+    gap: 1.5rem;
+    align-items: start;
+    margin-bottom: 3rem;
+  }
+  .intro-toc-row > nav.toc:only-child {
+    grid-column: 1 / -1;
+  }
+
   /* ── Intro block ── */
   .intro {
-    margin-bottom: 2rem;
-    padding: 1.2rem 1.4rem;
-    background: #fff;
+    padding: 1.3rem 1.6rem;
+    background: #FFF7ED;
     border-left: 4px solid var(--ochre);
-    font-size: .95rem;
-    line-height: 1.65;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: .93rem;
+    line-height: 1.7;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
   }
   .intro p:first-child { margin-top: 0; }
   .intro p:last-child  { margin-bottom: 0; }
 
   /* ── TOC ── */
   nav.toc {
-    margin: 0 0 2.5rem;
     font-family: -apple-system, system-ui, sans-serif;
     font-size: .875rem;
   }
   nav.toc > strong {
     display: block;
     text-transform: uppercase;
-    letter-spacing: .08em;
-    font-size: .72rem;
+    letter-spacing: .1em;
+    font-size: .68rem;
     color: var(--muted);
-    margin-bottom: .7rem;
+    margin-bottom: 1rem;
   }
-  .toc-section { margin-bottom: .9rem; }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: 1rem;
+  }
+  .toc-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    border: 1px solid var(--rule);
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  }
   a.toc-track {
     display: block;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
     color: var(--forest);
     text-decoration: none;
-    margin-bottom: .3rem;
-    font-size: .9rem;
+    margin-bottom: .6rem;
+    padding-bottom: .4rem;
+    border-bottom: 1px solid var(--rule);
   }
   a.toc-track:hover { color: var(--terra); }
-  .toc-count { font-weight: 400; color: var(--muted); font-size: .8em; }
+  .toc-count { font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; }
   ol.toc-entries {
     margin: 0;
-    padding-left: .6rem;
+    padding-left: .5rem;
     border-left: 2px solid var(--rule);
     list-style: none;
   }
-  ol.toc-entries li { margin-bottom: .4rem; line-height: 1.3; }
-  ol.toc-entries a { color: var(--ink); text-decoration: none; font-size: .83rem; }
+  ol.toc-entries li { margin-bottom: .45rem; line-height: 1.3; }
+  ol.toc-entries a { color: var(--ink); text-decoration: none; font-size: .82rem; }
   ol.toc-entries a:hover { color: var(--terra); }
   .toc-byline {
     display: block;
-    font-size: .77rem;
+    font-size: .74rem;
     font-style: italic;
     font-weight: 600;
     color: var(--muted);
     margin-top: .05rem;
   }
-  .toc-coauthors {
-    display: block;
-    font-size: .75rem;
-    font-style: italic;
-    font-weight: 400;
-    color: var(--muted);
-    padding-left: .5em;
-  }
 
   /* ── Sessions ── */
-  section.session { margin-bottom: 2.8rem; }
+  section.session { margin-bottom: 3rem; }
   section.session > h2 {
     font-family: -apple-system, system-ui, sans-serif;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--forest);
-    letter-spacing: .01em;
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .12em;
     margin: 0 0 1.2rem;
-    padding-bottom: .3rem;
+    padding-bottom: .5rem;
     border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: .7rem;
   }
   section.session > h2::before {
     content: "";
-    display: block;
+    display: inline-block;
     height: 3px;
-    width: 2.2rem;
-    margin-bottom: .5rem;
+    width: 2rem;
+    flex-shrink: 0;
+    border-radius: 2px;
     background: linear-gradient(
       90deg,
       var(--terra)  0 33.34%,
@@ -155,17 +200,30 @@
     );
   }
 
-  /* ── Entry ── */
+  /* ── Entry cards ── */
   article.entry {
-    margin: 0 0 1.7rem;
-    padding-left: .9rem;
-    border-left: 3px solid var(--ochre);
+    margin: 0 0 1rem;
+    padding: 1.4rem 1.8rem;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border-left: 4px solid var(--ochre);
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
   }
-  article.entry h3 { font-size: 1.05rem; margin: 0 0 .3rem; line-height: 1.35; }
+  article.entry h3 {
+    font-size: 1.05rem;
+    margin: 0 0 .3rem;
+    line-height: 1.35;
+  }
 
   /* ── Byline ── */
-  .byline { margin: 0 0 .55rem; }
-  p.presenter { font-style: italic; font-weight: 600; margin: 0 0 .05rem; font-size: 1rem; }
+  .byline { margin: 0 0 .6rem; }
+  p.presenter {
+    font-style: italic;
+    font-weight: 600;
+    font-size: .95rem;
+    color: var(--muted);
+    margin: 0;
+  }
   p.presenter .institution {
     font-style: normal;
     font-weight: 400;
@@ -174,36 +232,33 @@
     font-family: -apple-system, system-ui, sans-serif;
   }
   p.presenter .institution::before { content: " · "; color: var(--rule); }
-  p.coauthors {
-    font-style: italic;
-    font-size: .95rem;
-    color: var(--muted);
-    margin: 0;
-    padding-left: .75rem;
-    border-left: 2px solid var(--rule);
-  }
 
-  p.abstract { margin: 0 0 .4rem; }
+  p.abstract { margin: 0 0 .4rem; font-size: .95rem; }
   p.keywords {
     font-family: -apple-system, system-ui, sans-serif;
-    font-size: .78rem;
+    font-size: .74rem;
     color: var(--muted);
     margin: 0;
   }
 
   footer {
-    margin-top: 3rem;
+    margin-top: 3.5rem;
     padding-top: 1rem;
     border-top: 1px solid var(--rule);
-    font-size: .78rem;
+    font-size: .76rem;
     color: var(--muted);
     font-family: -apple-system, system-ui, sans-serif;
   }
-  @media (max-width: 520px) {
-    .header-inner { padding: 1rem 1.25rem .7rem; }
-    .header-top { flex-direction: column; gap: .6rem; }
-    .logo { height: 3rem; }
-    header h1 { font-size: 1.4rem; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 1.5rem 1.1rem 4rem; }
+    .header-inner { padding: 1.1rem 1.1rem .8rem; }
+    .header-top { flex-direction: column; align-items: flex-start; gap: .7rem; }
+    .logo { height: 5rem; }
+    header h1 { font-size: 1.5rem; }
+    .intro-toc-row { grid-template-columns: 1fr; }
+    .toc-grid { grid-template-columns: 1fr; }
+    article.entry { padding: 1.1rem 1.2rem; }
   }
 </style>
 </head>
@@ -227,27 +282,30 @@
   <div class="triband" aria-hidden="true"></div>
 </header>
 <div class="wrap">
-  {% if intro %}
-  <section class="intro">{{ intro | safe }}</section>
-  {% endif %}
-
-  <nav class="toc">
+  <div class="intro-toc-row">
+    {% if intro %}
+    <section class="intro">{{ intro | safe }}</section>
+    {% endif %}
+    <nav class="toc">
     <strong>{{ t.contents }}</strong>
-    {% for block in sessions %}
-    {% set si = loop.index %}
-    <div class="toc-section">
-      <a class="toc-track" href="#s{{ si }}">{{ t.tracks.get(block.track, block.track) }} <span class="toc-count">({{ block.entries|length }})</span></a>
-      <ol class="toc-entries">
-        {% for e in block.entries %}
-        <li>
-          <a href="#e{{ si }}-{{ loop.index }}">{{ e.title }}</a>
-          <span class="toc-byline">{{ e.authors }}{% if e.co_authors %}, {{ e.co_authors | join(", ") }}{% endif %}</span>
-        </li>
-        {% endfor %}
-      </ol>
+    <div class="toc-grid">
+      {% for block in sessions %}
+      {% set si = loop.index %}
+      <div class="toc-section">
+        <a class="toc-track" href="#s{{ si }}">{{ t.tracks.get(block.track, block.track) }} <span class="toc-count">({{ block.entries|length }})</span></a>
+        <ol class="toc-entries">
+          {% for e in block.entries %}
+          <li>
+            <a href="#e{{ si }}-{{ loop.index }}">{{ e.title }}</a>
+            <span class="toc-byline">{{ e.authors }}{% if e.co_authors %}, {{ e.co_authors | join(", ") }}{% endif %}</span>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </nav>
+    </nav>
+  </div>
 
   {% for block in sessions %}
   {% set si = loop.index %}
