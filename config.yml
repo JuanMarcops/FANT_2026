@@ -11,7 +11,8 @@ conference:
 
 # CSV exported from the Google Form / Sheet and committed into the repo.
 input:
-  # Path to the committed CSV, relative to the repo root.
+  # xlsx is the primary source; csv is the fallback if xlsx is absent.
+  xlsx_path: "data/FANT26_merged.xlsx"
   csv_path: "data/FANT26_merged.csv"
 
   # Map the canonical fields the code uses (left) to the CSV column

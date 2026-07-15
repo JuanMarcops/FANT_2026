@@ -165,103 +165,116 @@ def normalize_format(value: str) -> str:
     return _FORMAT_MAP.get(normalize_header(value), "")
 
 
-def read_csv(path: Path, colmap: dict) -> list[dict]:
-    """Read the exported CSV into canonical submission dicts.
+_COLUMN_DEFAULTS = {
+    "authors": ["Author / Presenter", "Author:in/ Vortragende:r"],
+    "co_authors": ["Co-authors", "Co-author", "Mitautor:innen"],
+    "institution": ["Institutional affiliation", "Institutionelle Zugehörigkeit", "Institution"],
+    "title": ["Title of the contribution", "Titel des Beitrags"],
+    "abstract": [
+        "Abstract (approx. 2–3 sentences)",
+        "Abstract (approx. 2-3 sentences)",
+        "Abstract (approx. 150 words)",
+        "Abstract",
+    ],
+    "track": [],
+    "keywords": ["Keywords (3-5)", "Schlagwörter"],
+    "format": ["Format of the contribution", "Format des Beitrags"],
+    "language": ["Language of the contribution:", "Sprache des Beitrags:"],
+    "first_name": ["First name", "Vorname"],
+    "last_name": ["Last name", "Nachname"],
+}
 
-    This code preserves duplicate column headers and chooses the first
-    non-empty value among duplicate header groups.
-    """
-    defaults = {
-        "authors": ["Author / Presenter", "Author:in/ Vortragende:r"],
-        "co_authors": ["Co-authors", "Co-author", "Mitautor:innen"],
-        "institution": ["Institutional affiliation", "Institutionelle Zugehörigkeit", "Institution"],
-        "title": ["Title of the contribution", "Titel des Beitrags"],
-        "abstract": [
-            "Abstract (approx. 2–3 sentences)",
-            "Abstract (approx. 2-3 sentences)",
-            "Abstract (approx. 150 words)",
-            "Abstract",
-        ],
-        "track": [],
-        "keywords": ["Keywords (3-5)", "Schlagwörter"],
-        "format": ["Format of the contribution", "Format des Beitrags"],
-        "language": ["Language of the contribution:", "Sprache des Beitrags:"],
-        "first_name": ["First name", "Vorname"],
-        "last_name": ["Last name", "Nachname"],
-    }
 
+def _parse_submission_rows(rows: list[list[str]], colmap: dict) -> list[dict]:
+    """Parse an iterable of string rows (header first) into submission dicts."""
     column_candidates = {
-        key: normalize_column_spec(colmap.get(key, defaults.get(key, []))) or defaults.get(key, [])
-        for key in defaults
+        key: normalize_column_spec(colmap.get(key, _COLUMN_DEFAULTS.get(key, []))) or _COLUMN_DEFAULTS.get(key, [])
+        for key in _COLUMN_DEFAULTS
     }
+
+    header = rows[0] if rows else []
+    header_index = build_header_index(header)
+
+    title_indices = find_header_indices(header_index, column_candidates["title"])
+    authors_indices = find_header_indices(header_index, column_candidates["authors"])
+    coauthor_indices = find_header_indices(header_index, column_candidates["co_authors"])
+    # Google Forms exports overflow co-author inputs as empty-header columns adjacent to a Co-authors column.
+    empty_indices = header_index.get("", [])
+    for cidx in list(coauthor_indices):
+        for eidx in empty_indices:
+            if eidx == cidx + 1 and eidx not in coauthor_indices:
+                coauthor_indices.append(eidx)
+    abstract_indices = find_header_indices(header_index, column_candidates["abstract"])
+    track_indices = find_header_indices(header_index, column_candidates["track"])
+    keywords_indices = find_header_indices(header_index, column_candidates["keywords"])
+    institution_indices = find_header_indices(header_index, column_candidates["institution"])
+    format_indices = find_header_indices(header_index, column_candidates["format"])
+    first_name_indices = find_header_indices(header_index, column_candidates["first_name"])
+    last_name_indices = find_header_indices(header_index, column_candidates["last_name"])
 
     submissions = []
-    with open(path, encoding="utf-8-sig", newline="") as fh:
-        reader = csv.reader(fh)
-        header = next(reader, [])
-        header_index = build_header_index(header)
+    for row in rows[1:]:
+        if not any(cell.strip() for cell in row):
+            continue
 
-        title_indices = find_header_indices(header_index, column_candidates["title"])
-        authors_indices = find_header_indices(header_index, column_candidates["authors"])
-        coauthor_indices = find_header_indices(header_index, column_candidates["co_authors"])
-        # Google Forms exports overflow co-author inputs as empty-header columns adjacent to a Co-authors column.
-        empty_indices = header_index.get("", [])
-        for cidx in list(coauthor_indices):
-            for eidx in empty_indices:
-                if eidx == cidx + 1 and eidx not in coauthor_indices:
-                    coauthor_indices.append(eidx)
-        abstract_indices = find_header_indices(header_index, column_candidates["abstract"])
-        track_indices = find_header_indices(header_index, column_candidates["track"])
-        keywords_indices = find_header_indices(header_index, column_candidates["keywords"])
-        institution_indices = find_header_indices(header_index, column_candidates["institution"])
-        format_indices = find_header_indices(header_index, column_candidates["format"])
-        language_indices = find_header_indices(header_index, column_candidates["language"])
-        first_name_indices = find_header_indices(header_index, column_candidates["first_name"])
-        last_name_indices = find_header_indices(header_index, column_candidates["last_name"])
+        format_value = get_cell(row, format_indices)
 
-        for row in reader:
-            if not any(cell.strip() for cell in row):
-                continue
+        title = normalize_case(get_cell(row, title_indices))
+        if not title:
+            continue
 
-            format_value = get_cell(row, format_indices)
+        abstract = get_cell(row, abstract_indices)
+        if not abstract or normalize_header(abstract) in _NONE_VALUES:
+            # Skip registrations without a real contribution (e.g. "I just want to attend")
+            continue
 
-            title = normalize_case(get_cell(row, title_indices))
-            if not title:
-                continue
+        authors = normalize_case(get_cell(row, authors_indices))
+        if not authors:
+            first_name = get_cell(row, first_name_indices)
+            last_name = get_cell(row, last_name_indices)
+            if first_name or last_name:
+                authors = normalize_case(
+                    " ".join(part for part in (first_name, last_name) if part)
+                )
 
-            abstract = get_cell(row, abstract_indices)
-            if not abstract or normalize_header(abstract) in _NONE_VALUES:
-                # Skip registrations without a real contribution (e.g. "I just want to attend")
-                continue
+        co_authors = [normalize_case(v) for v in clean_none_values(get_multi_cell(row, coauthor_indices))]
+        institution = normalize_case(get_cell(row, institution_indices))
+        keywords = get_cell(row, keywords_indices)
+        if normalize_header(keywords) in _NONE_VALUES:
+            keywords = ""
+        track = get_cell(row, track_indices) or normalize_format(format_value) or "Other"
 
-            authors = normalize_case(get_cell(row, authors_indices))
-            if not authors:
-                first_name = get_cell(row, first_name_indices)
-                last_name = get_cell(row, last_name_indices)
-                if first_name or last_name:
-                    authors = normalize_case(
-                        " ".join(part for part in (first_name, last_name) if part)
-                    )
-
-            co_authors = [normalize_case(v) for v in clean_none_values(get_multi_cell(row, coauthor_indices))]
-            institution = normalize_case(get_cell(row, institution_indices))
-            keywords = get_cell(row, keywords_indices)
-            if normalize_header(keywords) in _NONE_VALUES:
-                keywords = ""
-            track = get_cell(row, track_indices) or normalize_format(format_value) or "Other"
-
-            submissions.append(
-                {
-                    "authors": authors,
-                    "co_authors": co_authors,
-                    "institution": institution,
-                    "title": title,
-                    "abstract": abstract,
-                    "track": track,
-                    "keywords": keywords,
-                }
-            )
+        submissions.append(
+            {
+                "authors": authors,
+                "co_authors": co_authors,
+                "institution": institution,
+                "title": title,
+                "abstract": abstract,
+                "track": track,
+                "keywords": keywords,
+            }
+        )
     return submissions
+
+
+def read_xlsx(path: Path, colmap: dict) -> list[dict]:
+    """Read submissions directly from an xlsx file (first sheet)."""
+    import openpyxl
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb.active
+    rows = [
+        [str(cell) if cell is not None else "" for cell in row]
+        for row in ws.iter_rows(values_only=True)
+    ]
+    return _parse_submission_rows(rows, colmap)
+
+
+def read_csv(path: Path, colmap: dict) -> list[dict]:
+    """Read the exported CSV into canonical submission dicts."""
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        rows = list(csv.reader(fh))
+    return _parse_submission_rows(rows, colmap)
 
 
 def group_by_session(submissions: list[dict], cfg: dict) -> list[dict]:
@@ -403,19 +416,37 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--csv", help="override the CSV path from config.yml")
+    p.add_argument("--input", "--csv", dest="input", help="override the input file path from config.yml")
     p.add_argument("--out", default="site", help="output directory (default: site)")
     args = p.parse_args()
 
     cfg = load_config()
-    csv_path = ROOT / (args.csv or cfg["input"]["csv_path"])
-    if not csv_path.exists():
-        print(f"CSV not found: {csv_path}", file=sys.stderr)
+    colmap = cfg["input"]["columns"]
+
+    # Prefer xlsx over csv: try xlsx path first, fall back to csv_path from config.
+    input_override = args.input
+    if input_override:
+        input_path = ROOT / input_override
+        suffix = input_path.suffix.lower()
+    else:
+        xlsx_path = ROOT / cfg["input"].get("xlsx_path", "data/FANT26_merged.xlsx")
+        csv_path  = ROOT / cfg["input"]["csv_path"]
+        if xlsx_path.exists():
+            input_path, suffix = xlsx_path, ".xlsx"
+        else:
+            input_path, suffix = csv_path, ".csv"
+
+    if not input_path.exists():
+        print(f"Input file not found: {input_path}", file=sys.stderr)
         return 1
 
-    submissions = read_csv(csv_path, cfg["input"]["columns"])
+    if suffix == ".xlsx":
+        submissions = read_xlsx(input_path, colmap)
+    else:
+        submissions = read_csv(input_path, colmap)
+
     if not submissions:
-        print("No submissions found in CSV.", file=sys.stderr)
+        print("No submissions found in input file.", file=sys.stderr)
         return 1
 
     sessions = group_by_session(submissions, cfg)
