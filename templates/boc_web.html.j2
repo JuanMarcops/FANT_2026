@@ -241,6 +241,99 @@
     margin: 0;
   }
 
+  /* ── Schedule ── */
+  .schedule-section {
+    margin-bottom: 2.5rem;
+  }
+  .schedule-section > strong {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .68rem;
+    color: var(--muted);
+    font-family: -apple-system, system-ui, sans-serif;
+    margin-bottom: .9rem;
+  }
+  .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: .875rem;
+  }
+  .schedule-table tr { border-bottom: 1px solid var(--rule); }
+  .schedule-table tr:last-child { border-bottom: none; }
+  .schedule-table td {
+    padding: .55rem .6rem;
+    vertical-align: top;
+  }
+  .sch-time {
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--forest);
+    width: 4.5rem;
+    font-size: .82rem;
+  }
+  .sch-module { color: var(--ink); font-weight: 500; }
+  .sch-module.is-break { color: var(--muted); font-weight: 400; font-style: italic; }
+  .sch-presenters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem .5rem;
+    padding-top: .2rem;
+  }
+  /* tooltip chip */
+  .pres-chip {
+    position: relative;
+    display: inline-block;
+    font-size: .78rem;
+    color: var(--terra);
+    cursor: default;
+    border-bottom: 1px dotted var(--terra);
+  }
+  .pres-chip .pres-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: #fff;
+    font-size: .75rem;
+    line-height: 1.4;
+    padding: .45rem .7rem;
+    border-radius: 6px;
+    width: max-content;
+    max-width: 22rem;
+    z-index: 10;
+    pointer-events: none;
+    white-space: normal;
+  }
+  .pres-chip .pres-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--ink);
+  }
+  .pres-chip:hover .pres-tooltip,
+  .pres-chip:focus .pres-tooltip { display: block; }
+
+  /* ── Last-updated badge ── */
+  .last-updated {
+    display: inline-block;
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: .72rem;
+    color: var(--forest);
+    background: rgba(43,87,64,.08);
+    border: 1px solid rgba(43,87,64,.2);
+    border-radius: 20px;
+    padding: .15rem .65rem;
+    margin-left: .5rem;
+    vertical-align: middle;
+  }
+
   footer {
     margin-top: 3.5rem;
     padding-top: 1rem;
@@ -274,6 +367,7 @@
           {{ conf.dates }} · {{ conf.location }} ·
           {{ total }} {{ t.contributions }} ·
           <a href="{{ t.pdf_file }}">{{ t.download_pdf }}</a>
+          <span class="last-updated">{{ t.last_updated }}: {{ generated }}</span>
         </p>
         <p class="lang-switch"><a href="{{ t.alt_page }}" hreflang="{{ t.lang_attr == 'de' and 'en' or 'de' }}">{{ t.alt_label }}</a></p>
       </div>
@@ -306,6 +400,29 @@
     </div>
     </nav>
   </div>
+
+  {% if schedule %}
+  <div class="schedule-section">
+    <strong>{{ t.schedule_heading }}</strong>
+    <table class="schedule-table">
+      {% for slot in schedule %}
+      <tr>
+        <td class="sch-time">{{ slot.time }}</td>
+        <td>
+          <span class="sch-module{% if not slot.is_session %} is-break{% endif %}">{{ slot.module }}</span>
+          {% if slot.presenters %}
+          <div class="sch-presenters">
+            {% for p in slot.presenters %}
+            <span class="pres-chip" tabindex="0">{{ p.name }}{% if p.topic %}<span class="pres-tooltip">{{ p.topic }}</span>{% endif %}</span>{% if not loop.last %}&thinsp;·{% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
 
   {% for block in sessions %}
   {% set si = loop.index %}
