@@ -73,9 +73,12 @@ i18n:
     download_pdf: "PDF herunterladen"
     pdf_file: "book_of_contents_de.pdf"
     generated: "Automatisch generiert am"
+    last_updated: "Zuletzt aktualisiert"
     contributions: "Beiträge"
     alt_page: "index-en.html"
     alt_label: "English"
+    schedule_heading: "Programm"
+    presenters_label: "Vortragende"
   en:
     lang_attr: "en"
     tracks:
@@ -87,6 +90,9 @@ i18n:
     download_pdf: "Download PDF"
     pdf_file: "book_of_contents_en.pdf"
     generated: "Automatically generated on"
+    last_updated: "Last updated"
     contributions: "contributions"
     alt_page: "index.html"
     alt_label: "Deutsch"
+    schedule_heading: "Programme"
+    presenters_label: "Presenters"

@@ -21,7 +21,7 @@ import re
 import shutil
 import sys
 import unicodedata
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import yaml
@@ -280,6 +280,73 @@ def group_by_session(submissions: list[dict], cfg: dict) -> list[dict]:
     return [{"track": t, "entries": by_track[t]} for t in ordered + rest]
 
 
+def load_schedule() -> list[dict]:
+    """Read FANT26_schedule.xlsx and return schedule rows with presenter info."""
+    xlsx_path = ROOT / "data" / "FANT26_schedule.xlsx"
+    if not xlsx_path.exists():
+        return []
+    try:
+        import openpyxl
+    except ImportError:
+        return []
+
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+
+    presenters_by_session: dict[str, list[dict]] = {}
+    if "Presentors" in wb.sheetnames:
+        ws_p = wb["Presentors"]
+        rows = list(ws_p.iter_rows(values_only=True))
+        for row in rows[1:]:
+            if not row or not row[3]:
+                continue
+            last_name = str(row[0]).strip() if row[0] else ""
+            first_name = str(row[1]).strip() if row[1] else ""
+            topic = normalize_case(str(row[2]).strip()) if row[2] else ""
+            session = str(row[3]).strip()
+            name_parts = [p for p in (first_name, last_name) if p]
+            name = normalize_case(" ".join(name_parts))
+            presenters_by_session.setdefault(session, []).append({"name": name, "topic": topic})
+
+    schedule = []
+    if "Schedule" in wb.sheetnames:
+        ws_s = wb["Schedule"]
+        for row in ws_s.iter_rows(values_only=True):
+            if not row or row[0] == "Module":
+                continue
+            module = str(row[0]).strip() if row[0] else ""
+            time_val = row[1]
+            if hasattr(time_val, "strftime"):
+                time_str = time_val.strftime("%H:%M")
+            elif isinstance(time_val, datetime):
+                time_str = time_val.strftime("%H:%M")
+            else:
+                time_str = str(time_val) if time_val else ""
+            presenters = presenters_by_session.get(module, [])
+            schedule.append({
+                "module": module,
+                "time": time_str,
+                "is_session": bool(presenters),
+                "presenters": presenters,
+            })
+    return schedule
+
+
+def load_intro(lang_code: str) -> str:
+    """Load intro HTML, preferring mammoth-converted docx for DE, HTML files for others."""
+    docx_path = ROOT / "data" / "intro.html.docx"
+    if lang_code == "de" and docx_path.exists():
+        try:
+            import mammoth
+            with open(docx_path, "rb") as fh:
+                return mammoth.convert_to_html(fh).value
+        except Exception:
+            pass
+    lang_intro = ROOT / "data" / f"intro-{lang_code}.html"
+    fallback_intro = ROOT / "data" / "intro.html"
+    intro_path = lang_intro if lang_intro.exists() else fallback_intro
+    return intro_path.read_text(encoding="utf-8") if intro_path.exists() else ""
+
+
 def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
     env = Environment(
         loader=FileSystemLoader(TEMPLATES),
@@ -303,12 +370,10 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
 
     i18n = cfg.get("i18n") or {}
     generated = date.today().isoformat()
+    schedule = load_schedule()
 
     for lang_code, t in i18n.items():
-        lang_intro = ROOT / "data" / f"intro-{lang_code}.html"
-        fallback_intro = ROOT / "data" / "intro.html"
-        intro_path = lang_intro if lang_intro.exists() else fallback_intro
-        intro_html = intro_path.read_text(encoding="utf-8") if intro_path.exists() else ""
+        intro_html = load_intro(lang_code)
 
         html_name = "index.html" if lang_code == "de" else f"index-{lang_code}.html"
         ctx = {
@@ -318,6 +383,7 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
             "generated": generated,
             "has_logo": has_logo,
             "intro": intro_html,
+            "schedule": schedule,
             "t": t,
             "lang": t.get("lang_attr", lang_code),
         }

@@ -63,6 +63,20 @@
 
   p.abstract { margin: 0 0 .3rem; text-align: justify; }
   p.keywords { font-size: 8.5pt; color: #6B5F52; margin: 0; }
+
+  /* ── Schedule ── */
+  .schedule-page { page-break-after: always; }
+  .schedule-page h2 { font-size: 13pt; border-bottom: 1pt solid #1A1714; padding-bottom: .2rem; margin-bottom: .9rem; }
+  .schedule-table { width: 100%; border-collapse: collapse; }
+  .schedule-table tr { border-bottom: .5pt solid #DDD5C8; }
+  .schedule-table tr:last-child { border-bottom: none; }
+  .schedule-table td { padding: .45rem .4rem; vertical-align: top; font-size: 10pt; }
+  .sch-time { white-space: nowrap; font-weight: 700; color: #2B5740; width: 3.5rem; font-size: 9.5pt; }
+  .sch-module { font-weight: 600; }
+  .sch-module.is-break { font-weight: 400; font-style: italic; color: #6B5F52; }
+  .sch-presenters { margin-top: .2rem; padding-left: .5rem; border-left: 1.5pt solid #DDD5C8; }
+  .sch-presenter { font-size: 9pt; color: #1A1714; margin-bottom: .15rem; }
+  .sch-presenter-topic { font-size: 8.5pt; font-style: italic; color: #6B5F52; }
 </style>
 </head>
 <body>
@@ -95,6 +109,29 @@
     </div>
     {% endfor %}
   </div>
+
+  {% if schedule %}
+  <div class="schedule-page">
+    <h2>{{ t.schedule_heading }}</h2>
+    <table class="schedule-table">
+      {% for slot in schedule %}
+      <tr>
+        <td class="sch-time">{{ slot.time }}</td>
+        <td>
+          <div class="sch-module{% if not slot.is_session %} is-break{% endif %}">{{ slot.module }}</div>
+          {% if slot.presenters %}
+          <div class="sch-presenters">
+            {% for p in slot.presenters %}
+            <div class="sch-presenter">{{ p.name }}{% if p.topic %}<span class="sch-presenter-topic"> – {{ p.topic }}</span>{% endif %}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
 
   {% for block in sessions %}
   <section class="session">
