@@ -284,9 +284,9 @@ def group_by_session(submissions: list[dict], cfg: dict) -> list[dict]:
     for s in submissions:
         by_track.setdefault(s["track"], []).append(s)
 
-    # Sort entries within a track by title for stable, reproducible output.
+    # Sort entries within a track: by last name, or by title when no author.
     for entries in by_track.values():
-        entries.sort(key=lambda e: e["authors"].split()[-1].lower())
+        entries.sort(key=lambda e: (e["authors"].split() or [e["title"]])[-1].lower())
 
     ordered = [t for t in order if t in by_track]
     rest = sorted(t for t in by_track if t not in order)
