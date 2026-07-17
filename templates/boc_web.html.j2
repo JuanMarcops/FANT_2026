@@ -87,16 +87,13 @@
     );
   }
 
-  /* ── Intro + TOC row ── */
-  .intro-toc-row {
+  /* ── Intro + Schedule row ── */
+  .intro-schedule-row {
     display: grid;
-    grid-template-columns: 5fr 8fr;
+    grid-template-columns: 2fr 3fr;
     gap: 1.5rem;
     align-items: start;
-    margin-bottom: 3rem;
-  }
-  .intro-toc-row > nav.toc:only-child {
-    grid-column: 1 / -1;
+    margin-bottom: 0;
   }
 
   /* ── Intro block ── */
@@ -113,6 +110,12 @@
   .intro p:last-child  { margin-bottom: 0; }
 
   /* ── TOC ── */
+  .toc-wrap {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+    margin-bottom: 3rem;
+  }
   nav.toc {
     font-family: -apple-system, system-ui, sans-serif;
     font-size: .875rem;
@@ -241,37 +244,43 @@
     margin: 0;
   }
 
-  /* ── Schedule ── */
-  .schedule-section {
-    margin-bottom: 2.5rem;
+  /* ── Schedule card ── */
+  .schedule-card {
+    background: var(--surface);
+    border-left: 4px solid var(--forest);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 1.1rem 1.4rem 1.2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
   }
-  .schedule-section > strong {
+  .schedule-card > strong {
     display: block;
     text-transform: uppercase;
     letter-spacing: .1em;
-    font-size: .68rem;
-    color: var(--muted);
+    font-size: .66rem;
+    color: var(--forest);
     font-family: -apple-system, system-ui, sans-serif;
-    margin-bottom: .9rem;
+    font-weight: 700;
+    margin-bottom: .85rem;
   }
   .schedule-table {
     width: 100%;
     border-collapse: collapse;
     font-family: -apple-system, system-ui, sans-serif;
-    font-size: .875rem;
+    font-size: .84rem;
   }
   .schedule-table tr { border-bottom: 1px solid var(--rule); }
   .schedule-table tr:last-child { border-bottom: none; }
   .schedule-table td {
-    padding: .55rem .6rem;
+    padding: .48rem .5rem;
     vertical-align: top;
   }
   .sch-time {
     white-space: nowrap;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--forest);
-    width: 4.5rem;
-    font-size: .82rem;
+    width: 4rem;
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
   }
   .sch-module { color: var(--ink); font-weight: 500; }
   .sch-module.is-break { color: var(--muted); font-weight: 400; font-style: italic; }
@@ -349,7 +358,7 @@
     .header-top { flex-direction: column; align-items: flex-start; gap: .7rem; }
     .logo { height: 5rem; }
     header h1 { font-size: 1.5rem; }
-    .intro-toc-row { grid-template-columns: 1fr; }
+    .intro-schedule-row { grid-template-columns: 1fr; }
     .toc-grid { grid-template-columns: 1fr; }
     article.entry { padding: 1.1rem 1.2rem; }
   }
@@ -376,10 +385,38 @@
   <div class="triband" aria-hidden="true"></div>
 </header>
 <div class="wrap">
-  <div class="intro-toc-row">
+
+  <!-- Row 1: Intro (left) + Schedule (right) -->
+  <div class="intro-schedule-row">
     {% if intro %}
     <section class="intro">{{ intro | safe }}</section>
     {% endif %}
+    {% if schedule %}
+    <div class="schedule-card">
+      <strong>{{ t.schedule_heading }}</strong>
+      <table class="schedule-table">
+        {% for slot in schedule %}
+        <tr>
+          <td class="sch-time">{{ slot.time }}</td>
+          <td>
+            <span class="sch-module{% if not slot.is_session %} is-break{% endif %}">{{ slot.module }}</span>
+            {% if slot.presenters %}
+            <div class="sch-presenters">
+              {% for p in slot.presenters %}
+              <span class="pres-chip" tabindex="0">{{ p.name }}{% if p.topic %}<span class="pres-tooltip">{{ p.topic }}</span>{% endif %}</span>{% if not loop.last %}&thinsp;·{% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Row 2: TOC (full width) -->
+  <div class="toc-wrap">
     <nav class="toc">
     <strong>{{ t.contents }}</strong>
     <div class="toc-grid">
@@ -401,29 +438,7 @@
     </nav>
   </div>
 
-  {% if schedule %}
-  <div class="schedule-section">
-    <strong>{{ t.schedule_heading }}</strong>
-    <table class="schedule-table">
-      {% for slot in schedule %}
-      <tr>
-        <td class="sch-time">{{ slot.time }}</td>
-        <td>
-          <span class="sch-module{% if not slot.is_session %} is-break{% endif %}">{{ slot.module }}</span>
-          {% if slot.presenters %}
-          <div class="sch-presenters">
-            {% for p in slot.presenters %}
-            <span class="pres-chip" tabindex="0">{{ p.name }}{% if p.topic %}<span class="pres-tooltip">{{ p.topic }}</span>{% endif %}</span>{% if not loop.last %}&thinsp;·{% endif %}
-            {% endfor %}
-          </div>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-  {% endif %}
-
+  <!-- Row 3+: Sessions / Abstracts -->
   {% for block in sessions %}
   {% set si = loop.index %}
   <section class="session" id="s{{ si }}">
