@@ -6,6 +6,12 @@ conference:
   subtitle: "Book of Contents / Abstractband"
   dates: "4. September 2026"
   location: "Goethe-Universität Frankfurt am Main"
+  # Venue coordinates, used to embed a small OpenStreetMap widget next to
+  # the location text (data/Location.docx / data/location-en.html).
+  location_map:
+    lat: 50.1262196
+    lon: 8.6698829
+    zoom: 17
   # Public base URL of the GitHub Pages site (shown in the footer).
   site_url: "https://juanmarcops.github.io/FANT_2026/"
 
@@ -80,6 +86,8 @@ i18n:
     alt_label: "English"
     schedule_heading: "Programm"
     presenters_label: "Vortragende"
+    location_heading: "Ort"
+    map_alt: "Karte: Veranstaltungsort"
   en:
     lang_attr: "en"
     tracks:
@@ -97,3 +105,5 @@ i18n:
     alt_label: "Deutsch"
     schedule_heading: "Programme"
     presenters_label: "Presenters"
+    location_heading: "Venue"
+    map_alt: "Map: venue location"

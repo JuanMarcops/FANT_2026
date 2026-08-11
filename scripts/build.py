@@ -360,6 +360,20 @@ def load_intro(lang_code: str) -> str:
     return intro_path.read_text(encoding="utf-8") if intro_path.exists() else ""
 
 
+def load_location(lang_code: str) -> str:
+    """Load venue/location HTML, preferring mammoth-converted docx for DE, HTML files for others."""
+    docx_path = ROOT / "data" / "Location.docx"
+    if lang_code == "de" and docx_path.exists():
+        try:
+            import mammoth
+            with open(docx_path, "rb") as fh:
+                return mammoth.convert_to_html(fh).value
+        except Exception:
+            pass
+    lang_loc = ROOT / "data" / f"location-{lang_code}.html"
+    return lang_loc.read_text(encoding="utf-8") if lang_loc.exists() else ""
+
+
 def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
     env = Environment(
         loader=FileSystemLoader(TEMPLATES),
@@ -387,6 +401,7 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
 
     for lang_code, t in i18n.items():
         intro_html = load_intro(lang_code)
+        location_html = load_location(lang_code)
 
         html_name = "index.html" if lang_code == "de" else f"index-{lang_code}.html"
         ctx = {
@@ -396,6 +411,7 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
             "generated": generated,
             "has_logo": has_logo,
             "intro": intro_html,
+            "location": location_html,
             "schedule": schedule,
             "t": t,
             "lang": t.get("lang_attr", lang_code),
