@@ -109,6 +109,49 @@
   .intro p:first-child { margin-top: 0; }
   .intro p:last-child  { margin-bottom: 0; }
 
+  /* ── Location + map ── */
+  .location-row {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 1.5rem;
+    align-items: start;
+    margin-top: 1.5rem;
+  }
+  .location {
+    padding: 1.1rem 1.4rem 1.2rem;
+    background: var(--surface);
+    border-left: 4px solid var(--terra);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: .93rem;
+    line-height: 1.65;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .location > strong {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .66rem;
+    color: var(--terra);
+    font-family: -apple-system, system-ui, sans-serif;
+    font-weight: 700;
+    margin-bottom: .7rem;
+  }
+  .location p:first-of-type { margin-top: 0; }
+  .location p:last-child { margin-bottom: 0; }
+  .map-embed {
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    min-height: 12rem;
+  }
+  .map-embed iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 12rem;
+    border: 0;
+    display: block;
+  }
+
   /* ── TOC ── */
   .toc-wrap {
     margin-top: 2.5rem;
@@ -131,6 +174,7 @@
   .toc-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    align-items: start;
     gap: 1rem;
   }
   .toc-section {
@@ -208,15 +252,23 @@
   }
   section.session > h2 .toc-count { font-size: 1em; }
 
-  /* Tracks with very few entries get a lighter-weight heading instead of
-     the full-width section banner, so a single item doesn't look orphaned. */
+  /* Tracks with very few entries skip the full-width section banner
+     entirely (it looked broken with only one card under it) — the track
+     name becomes a small pill on the entry card itself instead. */
   section.session--compact { margin-bottom: 1.75rem; }
-  section.session--compact > h2 {
-    margin-bottom: .8rem;
-    padding-bottom: 0;
-    border-bottom: none;
+  .track-pill {
+    display: inline-block;
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: .66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--forest);
+    background: rgba(43,87,64,.08);
+    border-radius: 20px;
+    padding: .15rem .65rem;
+    margin-bottom: .6rem;
   }
-  section.session--compact > h2::before { width: 1rem; }
 
   /* ── Entry cards ── */
   article.entry {
@@ -374,6 +426,8 @@
     .logo { height: 5rem; }
     header h1 { font-size: 1.5rem; }
     .intro-schedule-row { grid-template-columns: 1fr; }
+    .location-row { grid-template-columns: 1fr; }
+    .map-embed, .map-embed iframe { min-height: 14rem; }
     .toc-grid { grid-template-columns: 1fr; }
     article.entry { padding: 1.1rem 1.2rem; }
   }
@@ -430,6 +484,25 @@
     {% endif %}
   </div>
 
+  <!-- Row 1b: Location (text left, map right) -->
+  {% if location %}
+  <div class="location-row">
+    <section class="location">
+      <strong>{{ t.location_heading }}</strong>
+      {{ location | safe }}
+    </section>
+    {% if conf.location_map %}
+    <div class="map-embed">
+      <iframe
+        src="https://www.openstreetmap.org/export/embed.html?bbox={{ conf.location_map.lon - 0.004 }}%2C{{ conf.location_map.lat - 0.002 }}%2C{{ conf.location_map.lon + 0.004 }}%2C{{ conf.location_map.lat + 0.002 }}&amp;layer=mapnik&amp;marker={{ conf.location_map.lat }}%2C{{ conf.location_map.lon }}"
+        title="{{ t.map_alt }}"
+        loading="lazy"
+      ></iframe>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <!-- Row 2: TOC (full width) -->
   <div class="toc-wrap">
     <nav class="toc">
@@ -456,10 +529,14 @@
   <!-- Row 3+: Sessions / Abstracts -->
   {% for block in sessions %}
   {% set si = loop.index %}
-  <section class="session{% if block.entries|length <= 2 %} session--compact{% endif %}" id="s{{ si }}">
+  {% set is_compact = block.entries|length <= 2 %}
+  <section class="session{% if is_compact %} session--compact{% endif %}" id="s{{ si }}">
+    {% if not is_compact %}
     <h2>{{ t.tracks.get(block.track, block.track) }} <span class="toc-count">({{ block.entries|length }})</span></h2>
+    {% endif %}
     {% for e in block.entries %}
     <article class="entry" id="e{{ si }}-{{ loop.index }}">
+      {% if is_compact %}<span class="track-pill">{{ t.tracks.get(block.track, block.track) }}</span>{% endif %}
       <h3>{{ e.title }}</h3>
       <div class="byline">
         {% if e.authors %}
