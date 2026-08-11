@@ -153,6 +153,10 @@
     border-bottom: 1px solid var(--rule);
   }
   a.toc-track:hover { color: var(--terra); }
+  /* Tracks with very few entries: a slimmer card instead of the full-size
+     box, so it doesn't read as a big empty banner next to fuller tracks. */
+  .toc-section--compact { padding: .7rem 1rem; box-shadow: none; }
+  .toc-section--compact a.toc-track { margin-bottom: .35rem; padding-bottom: .25rem; }
   .toc-count { font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; }
   ol.toc-entries {
     margin: 0;
@@ -202,6 +206,17 @@
       var(--forest) 66.67% 100%
     );
   }
+  section.session > h2 .toc-count { font-size: 1em; }
+
+  /* Tracks with very few entries get a lighter-weight heading instead of
+     the full-width section banner, so a single item doesn't look orphaned. */
+  section.session--compact { margin-bottom: 1.75rem; }
+  section.session--compact > h2 {
+    margin-bottom: .8rem;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  section.session--compact > h2::before { width: 1rem; }
 
   /* ── Entry cards ── */
   article.entry {
@@ -422,7 +437,7 @@
     <div class="toc-grid">
       {% for block in sessions %}
       {% set si = loop.index %}
-      <div class="toc-section">
+      <div class="toc-section{% if block.entries|length <= 2 %} toc-section--compact{% endif %}">
         <a class="toc-track" href="#s{{ si }}">{{ t.tracks.get(block.track, block.track) }} <span class="toc-count">({{ block.entries|length }})</span></a>
         <ol class="toc-entries">
           {% for e in block.entries %}
@@ -441,8 +456,8 @@
   <!-- Row 3+: Sessions / Abstracts -->
   {% for block in sessions %}
   {% set si = loop.index %}
-  <section class="session" id="s{{ si }}">
-    <h2>{{ t.tracks.get(block.track, block.track) }}</h2>
+  <section class="session{% if block.entries|length <= 2 %} session--compact{% endif %}" id="s{{ si }}">
+    <h2>{{ t.tracks.get(block.track, block.track) }} <span class="toc-count">({{ block.entries|length }})</span></h2>
     {% for e in block.entries %}
     <article class="entry" id="e{{ si }}-{{ loop.index }}">
       <h3>{{ e.title }}</h3>
