@@ -5,8 +5,10 @@ service-account.json
 .env
 .claude/
 
-# Excel temporary lock files (created while a file is open)
+# Office temporary/lock files (created while a file is open, or left
+# behind by a crash/autosave — e.g. ~$intro.docx, ~WRL0001.tmp)
 ~$*
+~WRL*.tmp
 
 # Generated locally by scripts/export_emails.py — never commit (public repo,
 # same reasoning as the CSV email-address warning in README.md).

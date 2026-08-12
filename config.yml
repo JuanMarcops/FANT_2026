@@ -7,19 +7,36 @@ conference:
   dates: "4. September 2026"
   location: "Goethe-Universität Frankfurt am Main"
   # Venue coordinates, used to embed a small OpenStreetMap widget next to
-  # the location text (data/Location.docx / data/location-en.html).
+  # the location text (data/location.docx / data/location-en.html).
   location_map:
     lat: 50.1262196
     lon: 8.6698829
     zoom: 17
+  # Conference logo, shown in the page header and PDF. Omit or point at a
+  # missing file to run without a logo.
+  logo_path: "data/logo.png"
   # Public base URL of the GitHub Pages site (shown in the footer).
   site_url: "https://juanmarcops.github.io/FANT_2026/"
 
-# CSV exported from the Google Form / Sheet and committed into the repo.
+# Submissions data + text blocks. To reuse this project for a different
+# conference: point these paths at your own files (any names work) and
+# leave scripts/ and templates/ untouched.
 input:
   # xlsx is the primary source; csv is the fallback if xlsx is absent.
   xlsx_path: "data/FANT26_merged.xlsx"
   csv_path: "data/FANT26_merged.csv"
+  # Schedule/timetable workbook (optional — omit the file to skip the
+  # schedule section entirely). Expects a "Schedule" sheet (Module, Time
+  # columns) and optionally a "Presenters" sheet (Last name, First name,
+  # Topic, Session columns) to attach presenter names to schedule slots.
+  schedule_xlsx_path: "data/FANT26_schedule.xlsx"
+  # Prose text blocks: DE source of truth is the docx (auto-converted at
+  # build time via mammoth); other languages come from hand-maintained
+  # data/<name>-<lang>.html files (see load_text_block in scripts/build.py).
+  # NB: still named intro.html.docx (historical) rather than intro.docx —
+  # rename it once it's not open in Word, then update this path to match.
+  intro_docx_path: "data/intro.html.docx"
+  location_docx_path: "data/location.docx"
 
   # Map the canonical fields the code uses (left) to the CSV column
   # HEADERS (right) exactly as the merged CSV writes them in row 1.
