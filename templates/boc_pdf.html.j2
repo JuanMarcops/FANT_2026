@@ -64,6 +64,10 @@
   p.abstract { margin: 0 0 .3rem; text-align: justify; }
   p.keywords { font-size: 8.5pt; color: #6B5F52; margin: 0; }
 
+  /* ── Location ── */
+  .location { font-size: 10.5pt; line-height: 1.6; margin-bottom: 1.4rem; }
+  .location p:first-child { margin-top: 0; }
+
   /* ── Schedule ── */
   .schedule-page { page-break-after: always; }
   .schedule-page h2 { font-size: 13pt; border-bottom: 1pt solid #1A1714; padding-bottom: .2rem; margin-bottom: .9rem; }
@@ -110,8 +114,13 @@
     {% endfor %}
   </div>
 
-  {% if schedule %}
+  {% if location or schedule %}
   <div class="schedule-page">
+    {% if location %}
+    <h2>{{ t.location_heading }}</h2>
+    <div class="location">{{ location | safe }}</div>
+    {% endif %}
+    {% if schedule %}
     <h2>{{ t.schedule_heading }}</h2>
     <table class="schedule-table">
       {% for slot in schedule %}
@@ -130,6 +139,7 @@
       </tr>
       {% endfor %}
     </table>
+    {% endif %}
   </div>
   {% endif %}
 
