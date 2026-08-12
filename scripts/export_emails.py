@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Export the submitter email list from FANT26_merged.xlsx for local use.
+"""Export the submitter email list from the submissions spreadsheet for local use.
 
-Run this locally after updating data/FANT26_merged.xlsx:
+Run this locally after updating the input xlsx (input.xlsx_path in config.yml):
 
     python scripts/export_emails.py
 
@@ -25,7 +25,7 @@ EMAIL_HEADER_CANDIDATES = ["Email address", "E-Mail-Adresse", "E-Mail", "Email"]
 
 def main() -> int:
     cfg = build.load_config()
-    xlsx_path = build.ROOT / cfg["input"].get("xlsx_path", "data/FANT26_merged.xlsx")
+    xlsx_path = build.ROOT / cfg["input"].get("xlsx_path", "data/submissions.xlsx")
     if not xlsx_path.exists():
         print(f"Input file not found: {xlsx_path}", file=sys.stderr)
         return 1

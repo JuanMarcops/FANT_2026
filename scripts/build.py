@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Build the conference Book of Contents from a committed CSV file.
+"""Build the conference Book of Contents from the submissions spreadsheet.
 
-Produces a static website (index.html) and a PDF (book_of_contents.pdf)
-in the output directory.
+Produces a static website (index.html / index-<lang>.html) and a PDF per
+language in the output directory.
 
 Usage:
     python scripts/build.py
-        Use the CSV path from config.yml (input.csv_path).
-    python scripts/build.py --csv data/responses.sample.csv
-        Override the CSV path (handy for testing with sample data).
+        Use the input path(s) from config.yml (input.xlsx_path, falling
+        back to input.csv_path if the xlsx is absent).
+    python scripts/build.py --input data/some-other-export.xlsx
+        Override the input file path (handy for testing with sample data).
     python scripts/build.py --out site
         Choose the output directory (default: site).
 
-All conference-specific settings live in config.yml, not here.
+All conference-specific settings live in config.yml, not here — see
+README.md for how to point this at a different conference.
 """
 
 import argparse
@@ -21,7 +23,7 @@ import re
 import shutil
 import sys
 import unicodedata
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 import yaml
@@ -293,9 +295,17 @@ def group_by_session(submissions: list[dict], cfg: dict) -> list[dict]:
     return [{"track": t, "entries": by_track[t]} for t in ordered + rest]
 
 
-def load_schedule() -> list[dict]:
-    """Read FANT26_schedule.xlsx and return schedule rows with presenter info."""
-    xlsx_path = ROOT / "data" / "FANT26_schedule.xlsx"
+_PRESENTER_SHEET_NAMES = ["Presenters", "Presentors"]
+_SCHEDULE_SHEET_NAMES = ["Schedule"]
+
+
+def load_schedule(cfg: dict) -> list[dict]:
+    """Read the schedule xlsx (input.schedule_xlsx_path) and return rows with presenter info.
+
+    Both sheets are read by header name, not column position, so reordering
+    or adding columns in the spreadsheet doesn't break parsing.
+    """
+    xlsx_path = ROOT / cfg["input"].get("schedule_xlsx_path", "data/schedule.xlsx")
     if not xlsx_path.exists():
         return []
     try:
@@ -305,48 +315,78 @@ def load_schedule() -> list[dict]:
 
     wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
 
+    def find_sheet(candidates: list[str]) -> str | None:
+        normalized = {normalize_header(n): n for n in wb.sheetnames}
+        for candidate in candidates:
+            match = normalized.get(normalize_header(candidate))
+            if match:
+                return match
+        return None
+
     presenters_by_session: dict[str, list[dict]] = {}
-    if "Presentors" in wb.sheetnames:
-        ws_p = wb["Presentors"]
-        rows = list(ws_p.iter_rows(values_only=True))
+    presenter_sheet = find_sheet(_PRESENTER_SHEET_NAMES)
+    if presenter_sheet:
+        rows = [
+            [str(cell) if cell is not None else "" for cell in row]
+            for row in wb[presenter_sheet].iter_rows(values_only=True)
+        ]
+        header_index = build_header_index(rows[0]) if rows else {}
+        last_idx = find_header_indices(header_index, ["Last name", "Nachname"])
+        first_idx = find_header_indices(header_index, ["First name", "Vorname"])
+        topic_idx = find_header_indices(header_index, ["Topic", "Thema"])
+        session_idx = find_header_indices(header_index, ["Session", "Modul"])
         for row in rows[1:]:
-            if not row or not row[3]:
+            session = get_cell(row, session_idx)
+            if not session:
                 continue
-            last_name = str(row[0]).strip() if row[0] else ""
-            first_name = str(row[1]).strip() if row[1] else ""
-            topic = normalize_case(str(row[2]).strip()) if row[2] else ""
-            session = str(row[3]).strip()
-            name_parts = [p for p in (first_name, last_name) if p]
-            name = normalize_case(" ".join(name_parts))
+            name = normalize_case(
+                " ".join(p for p in (get_cell(row, first_idx), get_cell(row, last_idx)) if p)
+            )
+            topic = normalize_case(get_cell(row, topic_idx))
             presenters_by_session.setdefault(session, []).append({"name": name, "topic": topic})
 
     schedule = []
-    if "Schedule" in wb.sheetnames:
-        ws_s = wb["Schedule"]
-        for row in ws_s.iter_rows(values_only=True):
-            if not row or row[0] == "Module":
-                continue
-            module = str(row[0]).strip() if row[0] else ""
-            time_val = row[1]
-            if hasattr(time_val, "strftime"):
-                time_str = time_val.strftime("%H:%M")
-            elif isinstance(time_val, datetime):
-                time_str = time_val.strftime("%H:%M")
-            else:
-                time_str = str(time_val) if time_val else ""
-            presenters = presenters_by_session.get(module, [])
-            schedule.append({
-                "module": module,
-                "time": time_str,
-                "is_session": bool(presenters),
-                "presenters": presenters,
-            })
+    schedule_sheet = find_sheet(_SCHEDULE_SHEET_NAMES)
+    if schedule_sheet:
+        ws_s = wb[schedule_sheet]
+        raw_rows = list(ws_s.iter_rows(values_only=True))
+        header = [str(c) if c is not None else "" for c in raw_rows[0]] if raw_rows else []
+        header_index = build_header_index(header)
+        module_idx = find_header_indices(header_index, ["Module", "Modul"])
+        time_idx = find_header_indices(header_index, ["Time", "Zeit"])
+        if module_idx and time_idx:
+            module_col, time_col = module_idx[0], time_idx[0]
+            for row in raw_rows[1:]:
+                if not row or module_col >= len(row):
+                    continue
+                module = str(row[module_col]).strip() if row[module_col] else ""
+                if not module:
+                    continue
+                time_val = row[time_col] if time_col < len(row) else None
+                if hasattr(time_val, "strftime"):
+                    time_str = time_val.strftime("%H:%M")
+                else:
+                    time_str = str(time_val) if time_val else ""
+                presenters = presenters_by_session.get(module, [])
+                schedule.append({
+                    "module": module,
+                    "time": time_str,
+                    "is_session": bool(presenters),
+                    "presenters": presenters,
+                })
     return schedule
 
 
-def load_intro(lang_code: str) -> str:
-    """Load intro HTML, preferring mammoth-converted docx for DE, HTML files for others."""
-    docx_path = ROOT / "data" / "intro.html.docx"
+def load_text_block(cfg: dict, docx_config_key: str, default_docx_name: str, html_prefix: str, lang_code: str) -> str:
+    """Load a prose text block, preferring a mammoth-converted docx for DE.
+
+    Content blocks (intro, location, and any future ones) all follow the same
+    convention: a docx that's the DE source of truth (path from
+    input.<docx_config_key>, e.g. input.intro_docx_path), auto-converted at
+    build time, plus a hand-maintained data/<html_prefix>-<lang>.html for
+    other languages, falling back to data/<html_prefix>.html if that's absent.
+    """
+    docx_path = ROOT / cfg["input"].get(docx_config_key, f"data/{default_docx_name}")
     if lang_code == "de" and docx_path.exists():
         try:
             import mammoth
@@ -354,24 +394,18 @@ def load_intro(lang_code: str) -> str:
                 return mammoth.convert_to_html(fh).value
         except Exception:
             pass
-    lang_intro = ROOT / "data" / f"intro-{lang_code}.html"
-    fallback_intro = ROOT / "data" / "intro.html"
-    intro_path = lang_intro if lang_intro.exists() else fallback_intro
-    return intro_path.read_text(encoding="utf-8") if intro_path.exists() else ""
+    lang_path = ROOT / "data" / f"{html_prefix}-{lang_code}.html"
+    fallback_path = ROOT / "data" / f"{html_prefix}.html"
+    text_path = lang_path if lang_path.exists() else fallback_path
+    return text_path.read_text(encoding="utf-8") if text_path.exists() else ""
 
 
-def load_location(lang_code: str) -> str:
-    """Load venue/location HTML, preferring mammoth-converted docx for DE, HTML files for others."""
-    docx_path = ROOT / "data" / "Location.docx"
-    if lang_code == "de" and docx_path.exists():
-        try:
-            import mammoth
-            with open(docx_path, "rb") as fh:
-                return mammoth.convert_to_html(fh).value
-        except Exception:
-            pass
-    lang_loc = ROOT / "data" / f"location-{lang_code}.html"
-    return lang_loc.read_text(encoding="utf-8") if lang_loc.exists() else ""
+def load_intro(cfg: dict, lang_code: str) -> str:
+    return load_text_block(cfg, "intro_docx_path", "intro.docx", "intro", lang_code)
+
+
+def load_location(cfg: dict, lang_code: str) -> str:
+    return load_text_block(cfg, "location_docx_path", "location.docx", "location", lang_code)
 
 
 def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
@@ -382,7 +416,7 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
     total = sum(len(s["entries"]) for s in sessions)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    logo_src = ROOT / "data" / "Logo FANT.png"
+    logo_src = ROOT / cfg["conference"].get("logo_path", "data/logo.png")
     has_logo = logo_src.exists()
     if has_logo:
         shutil.copy(logo_src, out_dir / "logo.png")
@@ -397,11 +431,11 @@ def render(cfg: dict, sessions: list[dict], out_dir: Path) -> None:
 
     i18n = cfg.get("i18n") or {}
     generated = date.today().isoformat()
-    schedule = load_schedule()
+    schedule = load_schedule(cfg)
 
     for lang_code, t in i18n.items():
-        intro_html = load_intro(lang_code)
-        location_html = load_location(lang_code)
+        intro_html = load_intro(cfg, lang_code)
+        location_html = load_location(cfg, lang_code)
 
         html_name = "index.html" if lang_code == "de" else f"index-{lang_code}.html"
         ctx = {
@@ -445,7 +479,7 @@ def main() -> int:
         input_path = ROOT / input_override
         suffix = input_path.suffix.lower()
     else:
-        xlsx_path = ROOT / cfg["input"].get("xlsx_path", "data/FANT26_merged.xlsx")
+        xlsx_path = ROOT / cfg["input"].get("xlsx_path", "data/submissions.xlsx")
         csv_path  = ROOT / cfg["input"]["csv_path"]
         if xlsx_path.exists():
             input_path, suffix = xlsx_path, ".xlsx"
