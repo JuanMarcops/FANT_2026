@@ -5,8 +5,8 @@ Run this locally after updating data/FANT26_merged.xlsx:
 
     python scripts/export_emails.py
 
-Writes data/emails.txt (one address per line, deduplicated, sorted) — paste
-that into Horde's compose/BCC field or an address book import.
+Writes data/emails.txt as a single semicolon-separated line (deduplicated,
+sorted) — paste that straight into Horde's compose/BCC field.
 
 data/emails.txt is git-ignored on purpose: this repo is public, and unlike
 the submission CSV/xlsx (which the README already warns about), an email
@@ -50,11 +50,15 @@ def main() -> int:
     emails = set()
     for row in rows[1:]:
         value = build.get_cell(row, email_indices)
-        if value:
-            emails.add(value.strip())
+        # A cell can itself hold more than one address (comma- or
+        # semicolon-separated), e.g. when co-submitters share a field.
+        for part in value.replace(";", ",").split(","):
+            part = part.strip()
+            if part:
+                emails.add(part)
 
     out_path = build.ROOT / "data" / "emails.txt"
-    out_path.write_text("\n".join(sorted(emails, key=str.lower)) + "\n", encoding="utf-8")
+    out_path.write_text("; ".join(sorted(emails, key=str.lower)) + "\n", encoding="utf-8")
     print(f"Wrote {len(emails)} unique email address(es) to {out_path}")
     return 0
 
