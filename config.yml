@@ -33,9 +33,7 @@ input:
   # Prose text blocks: DE source of truth is the docx (auto-converted at
   # build time via mammoth); other languages come from hand-maintained
   # data/<name>-<lang>.html files (see load_text_block in scripts/build.py).
-  # NB: still named intro.html.docx (historical) rather than intro.docx —
-  # rename it once it's not open in Word, then update this path to match.
-  intro_docx_path: "data/intro.html.docx"
+  intro_docx_path: "data/intro.docx"
   location_docx_path: "data/location.docx"
 
   # Map the canonical fields the code uses (left) to the CSV column
