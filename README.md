@@ -39,7 +39,7 @@ deployt. Versioniert werden nur die Rohdaten in `data/`.
 |---|---|
 | `FANT26_merged.xlsx` (`input.xlsx_path`) | Einreichungen (Titel, Autor:innen, Abstract, …). Primärquelle; `input.csv_path` ist der Fallback, falls die xlsx fehlt. |
 | `FANT26_schedule.xlsx` (`input.schedule_xlsx_path`) | Zeitplan. Optional — fehlt die Datei, wird der Programmabschnitt einfach nicht gerendert. Sheet `Schedule` (Spalten `Module`, `Time`) plus optional `Presenters` (`Last name`, `First name`, `Topic`, `Session`), um Vortragende einem Programmpunkt zuzuordnen. |
-| `intro.html.docx` (`input.intro_docx_path`) | Einleitungstext, DE. Wird beim Build automatisch per mammoth in HTML konvertiert. |
+| `intro.docx` (`input.intro_docx_path`) | Einleitungstext, DE. Wird beim Build automatisch per mammoth in HTML konvertiert. |
 | `location.docx` (`input.location_docx_path`) | Anfahrt/Ort-Text, DE. Gleiches Prinzip. |
 | `intro-en.html`, `location-en.html` | Handübersetzte englische Fassungen der obigen Texte. |
 | `intro.html`, `location-de.html` | Fallback, falls die jeweilige `.docx` mal fehlt/nicht lesbar ist. |
