@@ -7,3 +7,7 @@ service-account.json
 
 # Excel temporary lock files (created while a file is open)
 ~$*
+
+# Generated locally by scripts/export_emails.py — never commit (public repo,
+# same reasoning as the CSV email-address warning in README.md).
+data/emails.txt
